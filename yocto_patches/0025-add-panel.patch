@@ -1,0 +1,878 @@
+From 133613c36a133f820610406d8b26e219fc9b6a37 Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Tue, 3 May 2022 10:48:15 +0800
+Subject: [PATCH 25/40] add panel
+
+---
+ .../boot/dts/freescale/imx8mp-bds0800.dts     | 452 ++----------------
+ .../drivers/gpu/drm/panel/panel-simple.c      |  78 ++-
+ .../drivers/video/backlight/pwm_bl.c          |  13 +-
+ 3 files changed, 122 insertions(+), 421 deletions(-)
+
+diff --git a/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts b/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts
+index ce0d15cc0..c188e98bf 100644
+--- a/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts
++++ b/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts
+@@ -9,25 +9,13 @@
+ #include "imx8mp.dtsi"
+ 
+ / {
+-	model = "NXP i.MX8MPlus EVK board";
++	model = "QBIC bdsxx00 EVT kernel .......";
+ 	compatible = "fsl,imx8mp-evk", "fsl,imx8mp";
+ 
+ 	chosen {
+ 		stdout-path = &uart2;
+ 	};
+ 
+-	gpio-leds {
+-		compatible = "gpio-leds";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_gpio_led>;
+-
+-		status {
+-			label = "yellow:status";
+-			gpios = <&gpio3 16 GPIO_ACTIVE_HIGH>;
+-			default-state = "on";
+-		};
+-	};
+-
+ 	memory@40000000 {
+ 		device_type = "memory";
+ 		reg = <0x0 0x40000000 0 0xc0000000>,
+@@ -56,17 +44,6 @@ reg_can2_stby: regulator-can2-stby {
+ 		enable-active-high;
+ 	};
+ 
+-	reg_usdhc2_vmmc: regulator-usdhc2 {
+-		compatible = "regulator-fixed";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_reg_usdhc2_vmmc>;
+-		regulator-name = "VSD_3V3";
+-		regulator-min-microvolt = <3300000>;
+-		regulator-max-microvolt = <3300000>;
+-		gpio = <&gpio2 19 GPIO_ACTIVE_HIGH>;
+-		enable-active-high;
+-	};
+-
+ 	reg_audio_pwr: regulator-audio-pwr {
+ 		compatible = "regulator-fixed";
+ 		regulator-name = "audio-pwr";
+@@ -77,45 +54,6 @@ reg_audio_pwr: regulator-audio-pwr {
+ 		regulator-always-on;
+ 	};
+ 
+-	bt_sco_codec: bt_sco_codec {
+-		#sound-dai-cells = <1>;
+-		compatible = "linux,bt-sco";
+-	};
+-
+-	sound-bt-sco {
+-		compatible = "simple-audio-card";
+-		simple-audio-card,name = "bt-sco-audio";
+-		simple-audio-card,format = "dsp_a";
+-		simple-audio-card,bitclock-inversion;
+-		simple-audio-card,frame-master = <&btcpu>;
+-		simple-audio-card,bitclock-master = <&btcpu>;
+-
+-		btcpu: simple-audio-card,cpu {
+-			sound-dai = <&sai2>;
+-			dai-tdm-slot-num = <2>;
+-			dai-tdm-slot-width = <16>;
+-		};
+-
+-		simple-audio-card,codec {
+-			sound-dai = <&bt_sco_codec 1>;
+-		};
+-	};
+-
+-	sound-hdmi {
+-		compatible = "fsl,imx-audio-hdmi";
+-		model = "audio-hdmi";
+-		audio-cpu = <&aud2htx>;
+-		hdmi-out;
+-		constraint-rate = <44100>,
+-				<88200>,
+-				<176400>,
+-				<32000>,
+-				<48000>,
+-				<96000>,
+-				<192000>;
+-		status = "okay";
+-	};
+-
+ 	sound-wm8960 {
+ 		compatible = "fsl,imx-audio-wm8960";
+ 		model = "wm8960-audio";
+@@ -131,36 +69,24 @@ sound-wm8960 {
+ 			"Ext Spk", "SPK_RP",
+ 			"Ext Spk", "SPK_RN",
+ 			"LINPUT1", "Mic Jack",
+-			"LINPUT3", "Mic Jack",
+-			"Mic Jack", "MICB";
++			"LINPUT3", "Mic Jack";
+ 	};
+ 
+-	sound-micfil {
+-		compatible = "fsl,imx-audio-card";
+-		model = "imx-audio-micfil";
+-		pri-dai-link {
+-			link-name = "micfil hifi";
+-			format = "i2s";
+-			cpu {
+-				sound-dai = <&micfil>;
+-			};
+-		};
+-	};
+-
+-	sound-xcvr {
+-		compatible = "fsl,imx-audio-card";
+-		model = "imx-audio-xcvr";
+-		pri-dai-link {
+-			link-name = "XCVR PCM";
+-			cpu {
+-				sound-dai = <&xcvr>;
+-			};
+-		};
+-	};
++// 	sound-micfil {
++// 		compatible = "fsl,imx-audio-card";
++// 		model = "imx-audio-micfil";
++// 		pri-dai-link {
++// 			link-name = "micfil hifi";
++// 			format = "i2s";
++// 			cpu {
++// 				sound-dai = <&micfil>;
++// 			};
++// 		};
++// 	};
+ 
+ 	lvds_backlight: lvds_backlight {
+ 		compatible = "pwm-backlight";
+-		pwms = <&pwm2 0 100000>;
++		pwms = <&pwm1 0 2000000>;
+ 		status = "okay";
+ 
+ 		brightness-levels = < 0  1  2  3  4  5  6  7  8  9
+@@ -174,12 +100,18 @@ lvds_backlight: lvds_backlight {
+ 				     80 81 82 83 84 85 86 87 88 89
+ 				     90 91 92 93 94 95 96 97 98 99
+ 				    100>;
+-		default-brightness-level = <80>;
++		default-brightness-level = <99>;
+ 	};
+ 	
+ 	lvds0_panel {
+-		compatible = "jdi,tx26d202vm0bwa";
+-		backlight = <&lvds_backlight>;
++// 		compatible = "suniverse,st080hdldn00";
++        compatible = "auo,g121ean01";
++        pinctrl-names = "default";
++		pinctrl-0 = <&pinctrl_lvds_panel>;
++// 		backlight = <&lvds_backlight>;
++        
++ 		enable-gpios = <&gpio1 6 GPIO_ACTIVE_HIGH>;
++		reset-gpios = <&gpio1 7 GPIO_ACTIVE_HIGH>;
+ 
+ 		port {
+ 			panel_lvds_in: endpoint {
+@@ -188,19 +120,6 @@ panel_lvds_in: endpoint {
+ 		};
+ 	};
+ 
+-	cbtl04gp {
+-		compatible = "nxp,cbtl04gp";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_typec_mux>;
+-		switch-gpios = <&gpio4 20 GPIO_ACTIVE_LOW>;
+-		orientation-switch;
+-
+-		port {
+-			usb3_data_ss: endpoint {
+-				remote-endpoint = <&typec_con_ss>;
+-			};
+-		};
+-	};
+ };
+ 
+ &flexspi {
+@@ -226,14 +145,6 @@ &flexcan1 {
+ 	status = "okay";
+ };
+ 
+-&flexcan2 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_flexcan2>;
+-	xceiver-supply = <&reg_can2_stby>;
+-	pinctrl-assert-gpios = <&pca6416 3 GPIO_ACTIVE_HIGH>;
+-	status = "disabled";/* can2 pin conflict with pdm */
+-};
+-
+ &A53_0 {
+ 	cpu-supply = <&buck2>;
+ };
+@@ -260,17 +171,6 @@ &pwm1 {
+ 	status = "okay";
+ };
+ 
+-&pwm2 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_pwm2>;
+-	status = "okay";
+-};
+-
+-&pwm4 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_pwm4>;
+-	status = "okay";
+-};
+ 
+ &aud2htx {
+ 	status = "okay";
+@@ -370,30 +270,6 @@ queue4 {
+ 	};
+ };
+ 
+-&fec {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_fec>;
+-	phy-mode = "rgmii-id";
+-	phy-handle = <&ethphy1>;
+-	fsl,magic-packet;
+-	status = "okay";
+-
+-	mdio {
+-		#address-cells = <1>;
+-		#size-cells = <0>;
+-
+-		ethphy1: ethernet-phy@1 {
+-			compatible = "ethernet-phy-ieee802.3-c22";
+-			reg = <1>;
+-			eee-broken-1000t;
+-			reset-gpios = <&gpio4 2 GPIO_ACTIVE_LOW>;
+-			reset-assert-us = <10000>;
+-			reset-deassert-us = <80000>;
+-			realtek,clkout-disable;
+-		};
+-	};
+-};
+-
+ &i2c1 {
+ 	clock-frequency = <400000>;
+ 	pinctrl-names = "default";
+@@ -501,87 +377,6 @@ &i2c2 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_i2c2>;
+ 	status = "okay";
+-
+-	adv_bridge: adv7535@3d {
+-		compatible = "adi,adv7535";
+-		reg = <0x3d>;
+-		adi,addr-cec = <0x3b>;
+-		adi,dsi-lanes = <4>;
+-		status = "okay";
+-
+-		port {
+-			adv7535_from_dsim: endpoint {
+-				remote-endpoint = <&dsim_to_adv7535>;
+-			};
+-		};
+-	};
+-
+-	ov5640_0: ov5640_mipi@3c {
+-		compatible = "ovti,ov5640";
+-		reg = <0x3c>;
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_csi0_pwn>, <&pinctrl_csi0_rst>, <&pinctrl_csi_mclk>;
+-		clocks = <&clk IMX8MP_CLK_IPP_DO_CLKO2>;
+-		clock-names = "xclk";
+-		assigned-clocks = <&clk IMX8MP_CLK_IPP_DO_CLKO2>;
+-		assigned-clock-parents = <&clk IMX8MP_CLK_24M>;
+-		assigned-clock-rates = <24000000>;
+-		csi_id = <0>;
+-		powerdown-gpios = <&gpio2 11 GPIO_ACTIVE_HIGH>;
+-		reset-gpios = <&gpio1 6 GPIO_ACTIVE_LOW>;
+-		mclk = <24000000>;
+-		mclk_source = <0>;
+-		mipi_csi;
+-		status = "okay";
+-
+-		port {
+-			ov5640_mipi_0_ep: endpoint {
+-				remote-endpoint = <&mipi_csi0_ep>;
+-				data-lanes = <1 2>;
+-				clock-lanes = <0>;
+-			};
+-		};
+-	};
+-
+-	ptn5110: tcpc@50 {
+-		compatible = "nxp,ptn5110";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_typec>;
+-		reg = <0x50>;
+-		interrupt-parent = <&gpio4>;
+-		interrupts = <19 8>;
+-
+-		port {
+-			typec_dr_sw: endpoint {
+-				remote-endpoint = <&usb3_drd_sw>;
+-			};
+-		};
+-
+-		usb_con: connector {
+-			compatible = "usb-c-connector";
+-			label = "USB-C";
+-			power-role = "dual";
+-			data-role = "dual";
+-			try-power-role = "sink";
+-			source-pdos = <PDO_FIXED(5000, 3000, PDO_FIXED_USB_COMM)>;
+-			sink-pdos = <PDO_FIXED(5000, 3000, PDO_FIXED_USB_COMM)
+-				     PDO_VAR(5000, 20000, 3000)>;
+-			op-sink-microwatt = <15000000>;
+-			self-powered;
+-
+-			ports {
+-				#address-cells = <1>;
+-				#size-cells = <0>;
+-
+-				port@1 {
+-					reg = <1>;
+-					typec_con_ss: endpoint {
+-						remote-endpoint = <&usb3_data_ss>;
+-					};
+-				};
+-			};
+-		};
+-	};
+ };
+ 
+ &i2c3 {
+@@ -590,13 +385,6 @@ &i2c3 {
+ 	pinctrl-0 = <&pinctrl_i2c3>;
+ 	status = "okay";
+ 
+-	pca6416: gpio@20 {
+-		compatible = "ti,tca6416";
+-		reg = <0x20>;
+-		gpio-controller;
+-		#gpio-cells = <2>;
+-	};
+-
+ 	codec: wm8960@1a {
+ 		compatible = "wlf,wm8960";
+ 		reg = <0x1a>;
+@@ -608,76 +396,22 @@ codec: wm8960@1a {
+ 		SPKVDD1-supply = <&reg_audio_pwr>;
+ 	};
+ 
+-	ov5640_1: ov5640_mipi@3c {
+-		compatible = "ovti,ov5640";
+-		reg = <0x3c>;
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_csi0_pwn>, <&pinctrl_csi0_rst>, <&pinctrl_csi_mclk>;
+-		clocks = <&clk IMX8MP_CLK_IPP_DO_CLKO2>;
+-		clock-names = "xclk";
+-		assigned-clocks = <&clk IMX8MP_CLK_IPP_DO_CLKO2>;
+-		assigned-clock-parents = <&clk IMX8MP_CLK_24M>;
+-		assigned-clock-rates = <24000000>;
+-		csi_id = <0>;
+-		powerdown-gpios = <&gpio4 1 GPIO_ACTIVE_HIGH>;
+-		reset-gpios = <&gpio4 0 GPIO_ACTIVE_LOW>;
+-		mclk = <24000000>;
+-		mclk_source = <0>;
+-		mipi_csi;
+-		status = "disabled";
+-
+-		port {
+-			ov5640_mipi_1_ep: endpoint {
+-				remote-endpoint = <&mipi_csi1_ep>;
+-				data-lanes = <1 2>;
+-				clock-lanes = <0>;
+-			};
+-		};
+-	};
+-};
+-
+-&irqsteer_hdmi {
+-	status = "okay";
+-};
+-
+-&hdmi_blk_ctrl {
+-	status = "okay";
+ };
+ 
+-&hdmi_pavi {
+-	status = "okay";
+-};
+-
+-&hdmi {
+-	status = "okay";
+-};
+-
+-&hdmiphy {
+-	status = "okay";
+-};
+-
+-&lcdif1 {
+-	status = "okay";
+-};
+ 
+ &lcdif2 {
+ 	status = "okay";
+ };
+ 
+-&lcdif3 {
+-	status = "okay";
+-
+-	thres-low  = <1 2>;             /* (FIFO * 1 / 2) */
+-	thres-high = <3 4>;             /* (FIFO * 3 / 4) */
+-};
+ 
+ &ldb {
+ 	status = "okay";
+-	fsl,dual-channel;
++// 	fsl,dual-channel;
+ 
+ 	lvds-channel@0 {
+-		fsl,data-mapping = "spwg";
+-		/delete-node/ port@1;
++        fsl,data-mapping = "jeida";  // "jeida"  "spwg".
++        fsl,data-width = <24>;  // <18>  <24>.
++        status = "okay";
+ 
+ 		port@1 {
+ 			reg = <1>;
+@@ -695,17 +429,6 @@ &ldb_phy {
+ 
+ 
+ 
+-&mipi_dsi {
+-	status = "okay";
+-
+-	port@1 {
+-		dsim_to_adv7535: endpoint {
+-			remote-endpoint = <&adv7535_from_dsim>;
+-			attach-bridge;
+-		};
+-	};
+-};
+-
+ &snvs_pwrkey {
+ 	status = "okay";
+ };
+@@ -722,7 +445,7 @@ &micfil {
+ 	assigned-clocks = <&clk IMX8MP_CLK_PDM>;
+ 	assigned-clock-parents = <&clk IMX8MP_AUDIO_PLL1_OUT>;
+ 	assigned-clock-rates = <196608000>;
+-	status = "okay";
++	status = "disabled";
+ };
+ 
+ &pcie{
+@@ -824,7 +547,6 @@ &uart2 {
+ };
+ 
+ &usb3_phy0 {
+-	vbus-power-supply = <&ptn5110>;
+ 	fsl,phy-tx-vref-tune = <0xe>;
+ 	fsl,phy-tx-preemp-amp-tune = <3>;
+ 	fsl,phy-tx-vboost-level = <5>;
+@@ -848,12 +570,6 @@ &usb_dwc3_0 {
+ 	snps,dis-u1-entry-quirk;
+ 	snps,dis-u2-entry-quirk;
+ 	status = "okay";
+-
+-	port {
+-		usb3_drd_sw: endpoint {
+-			remote-endpoint = <&typec_dr_sw>;
+-		};
+-	};
+ };
+ 
+ &usb3_phy1 {
+@@ -882,19 +598,6 @@ &uart3 {
+ 	status = "okay";
+ };
+ 
+-&usdhc2 {
+-	assigned-clocks = <&clk IMX8MP_CLK_USDHC2>;
+-	assigned-clock-rates = <400000000>;
+-	pinctrl-names = "default", "state_100mhz", "state_200mhz";
+-	pinctrl-0 = <&pinctrl_usdhc2>, <&pinctrl_usdhc2_gpio>;
+-	pinctrl-1 = <&pinctrl_usdhc2_100mhz>, <&pinctrl_usdhc2_gpio>;
+-	pinctrl-2 = <&pinctrl_usdhc2_200mhz>, <&pinctrl_usdhc2_gpio>;
+-	cd-gpios = <&gpio2 12 GPIO_ACTIVE_LOW>;
+-	vmmc-supply = <&reg_usdhc2_vmmc>;
+-	bus-width = <4>;
+-	status = "okay";
+-};
+-
+ &usdhc3 {
+ 	assigned-clocks = <&clk IMX8MP_CLK_USDHC3>;
+ 	assigned-clock-rates = <400000000>;
+@@ -924,6 +627,7 @@ MX8MP_IOMUXC_HDMI_DDC_SCL__HDMIMIX_HDMI_SCL	0x400001c3
+ 			MX8MP_IOMUXC_HDMI_DDC_SDA__HDMIMIX_HDMI_SDA	0x400001c3
+ 			MX8MP_IOMUXC_HDMI_HPD__HDMIMIX_HDMI_HPD		0x40000019
+ 			MX8MP_IOMUXC_HDMI_CEC__HDMIMIX_HDMI_CEC		0x40000019
++			MX8MP_IOMUXC_GPIO1_IO12__GPIO1_IO12	0x16
+ 		>;
+ 	};
+ 
+@@ -933,18 +637,6 @@ MX8MP_IOMUXC_GPIO1_IO01__PWM1_OUT	0x116
+ 		>;
+ 	};
+ 
+-	pinctrl_pwm2: pwm2grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_GPIO1_IO11__PWM2_OUT	0x116
+-		>;
+-	};
+-
+-	pinctrl_pwm4: pwm4grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI5_RXFS__PWM4_OUT	0x116
+-		>;
+-	};
+-
+ 	pinctrl_ecspi2: ecspi2grp {
+ 		fsl,pins = <
+ 			MX8MP_IOMUXC_ECSPI2_SCLK__ECSPI2_SCLK		0x82
+@@ -1041,6 +733,15 @@ pinctrl_gpio_led: gpioledgrp {
+ 			MX8MP_IOMUXC_NAND_READY_B__GPIO3_IO16	0x19
+ 		>;
+ 	};
++    
++	pinctrl_lvds_panel: gpiopanelgrp {
++		fsl,pins = <
++			MX8MP_IOMUXC_GPIO1_IO06__GPIO1_IO06	0x16
++			MX8MP_IOMUXC_GPIO1_IO07__GPIO1_IO07	0x16
++			MX8MP_IOMUXC_GPIO1_IO11__GPIO1_IO11	0x16
++			MX8MP_IOMUXC_SAI5_RXD3__GPIO3_IO24	0x16
++		>;
++	};
+ 
+ 	pinctrl_i2c1: i2c1grp {
+ 		fsl,pins = <
+@@ -1095,8 +796,6 @@ pinctrl_pdm: pdmgrp {
+ 			MX8MP_IOMUXC_SAI5_RXC__AUDIOMIX_PDM_CLK		0xd6
+ 			MX8MP_IOMUXC_SAI5_RXD0__AUDIOMIX_PDM_BIT_STREAM00	0xd6
+ 			MX8MP_IOMUXC_SAI5_RXD1__AUDIOMIX_PDM_BIT_STREAM01	0xd6
+-			MX8MP_IOMUXC_SAI5_RXD2__AUDIOMIX_PDM_BIT_STREAM02	0xd6
+-			MX8MP_IOMUXC_SAI5_RXD3__AUDIOMIX_PDM_BIT_STREAM03	0xd6
+ 		>;
+ 	};
+ 
+@@ -1170,48 +869,6 @@ MX8MP_IOMUXC_ECSPI1_MISO__UART3_DCE_CTS		0x140
+ 		>;
+ 	};
+ 
+-	pinctrl_usdhc2: usdhc2grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SD2_CLK__USDHC2_CLK	0x190
+-			MX8MP_IOMUXC_SD2_CMD__USDHC2_CMD	0x1d0
+-			MX8MP_IOMUXC_SD2_DATA0__USDHC2_DATA0	0x1d0
+-			MX8MP_IOMUXC_SD2_DATA1__USDHC2_DATA1	0x1d0
+-			MX8MP_IOMUXC_SD2_DATA2__USDHC2_DATA2	0x1d0
+-			MX8MP_IOMUXC_SD2_DATA3__USDHC2_DATA3	0x1d0
+-			MX8MP_IOMUXC_GPIO1_IO04__USDHC2_VSELECT	0xc1
+-		>;
+-	};
+-
+-	pinctrl_usdhc2_100mhz: usdhc2-100mhzgrp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SD2_CLK__USDHC2_CLK	0x194
+-			MX8MP_IOMUXC_SD2_CMD__USDHC2_CMD	0x1d4
+-			MX8MP_IOMUXC_SD2_DATA0__USDHC2_DATA0	0x1d4
+-			MX8MP_IOMUXC_SD2_DATA1__USDHC2_DATA1	0x1d4
+-			MX8MP_IOMUXC_SD2_DATA2__USDHC2_DATA2	0x1d4
+-			MX8MP_IOMUXC_SD2_DATA3__USDHC2_DATA3	0x1d4
+-			MX8MP_IOMUXC_GPIO1_IO04__USDHC2_VSELECT 0xc1
+-		>;
+-	};
+-
+-	pinctrl_usdhc2_200mhz: usdhc2-200mhzgrp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SD2_CLK__USDHC2_CLK	0x196
+-			MX8MP_IOMUXC_SD2_CMD__USDHC2_CMD	0x1d6
+-			MX8MP_IOMUXC_SD2_DATA0__USDHC2_DATA0	0x1d6
+-			MX8MP_IOMUXC_SD2_DATA1__USDHC2_DATA1	0x1d6
+-			MX8MP_IOMUXC_SD2_DATA2__USDHC2_DATA2	0x1d6
+-			MX8MP_IOMUXC_SD2_DATA3__USDHC2_DATA3	0x1d6
+-			MX8MP_IOMUXC_GPIO1_IO04__USDHC2_VSELECT 0xc1
+-		>;
+-	};
+-
+-	pinctrl_usdhc2_gpio: usdhc2gpiogrp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SD2_CD_B__GPIO2_IO12	0x1c4
+-		>;
+-	};
+-
+ 	pinctrl_usdhc3: usdhc3grp {
+ 		fsl,pins = <
+ 			MX8MP_IOMUXC_NAND_WE_B__USDHC3_CLK	0x190
+@@ -1317,39 +974,6 @@ &mix_gpu_ml {
+ 	status = "okay";
+ };
+ 
+-&mipi_csi_0 {
+-	#address-cells = <1>;
+-	#size-cells = <0>;
+-	status = "okay";
+-
+-	port@0 {
+-		reg = <0>;
+-		mipi_csi0_ep: endpoint {
+-			remote-endpoint = <&ov5640_mipi_0_ep>;
+-			data-lanes = <2>;
+-			csis-hs-settle = <13>;
+-			csis-clk-settle = <2>;
+-			csis-wclk;
+-		};
+-	};
+-};
+-
+-&mipi_csi_1 {
+-	#address-cells = <1>;
+-	#size-cells = <0>;
+-	status = "disabled";
+-
+-	port@1 {
+-		reg = <1>;
+-		mipi_csi1_ep: endpoint {
+-			remote-endpoint = <&ov5640_mipi_1_ep>;
+-			data-lanes = <2>;
+-			csis-hs-settle = <13>;
+-			csis-clk-settle = <2>;
+-			csis-wclk;
+-		};
+-	};
+-};
+ 
+ &cameradev {
+ 	status = "okay";
+diff --git a/qbic/sources/linux-imx-5.15.5/drivers/gpu/drm/panel/panel-simple.c b/qbic/sources/linux-imx-5.15.5/drivers/gpu/drm/panel/panel-simple.c
+index 9762d7b35..341c5903c 100644
+--- a/qbic/sources/linux-imx-5.15.5/drivers/gpu/drm/panel/panel-simple.c
++++ b/qbic/sources/linux-imx-5.15.5/drivers/gpu/drm/panel/panel-simple.c
+@@ -191,6 +191,7 @@ struct panel_simple {
+ 
+ 	struct gpio_desc *enable_gpio;
+ 	struct gpio_desc *hpd_gpio;
++    struct gpio_desc *reset_gpio;
+ 
+ 	struct edid *edid;
+ 
+@@ -398,13 +399,15 @@ static int panel_simple_prepare_once(struct panel_simple *p)
+ 	int err;
+ 	int hpd_asserted;
+ 	unsigned long hpd_wait_us;
++    
++    dev_err(dev, "panel_simple_prepare_once.............................................\n");
+ 
+ 	panel_simple_wait(p->unprepared_time, p->desc->delay.unprepare);
+ 
+ 	err = regulator_enable(p->supply);
+ 	if (err < 0) {
+ 		dev_err(dev, "failed to enable supply: %d\n", err);
+-		return err;
++		//return err;
+ 	}
+ 
+ 	gpiod_set_value_cansleep(p->enable_gpio, 1);
+@@ -477,6 +480,8 @@ static int panel_simple_prepare(struct drm_panel *panel)
+ {
+ 	struct panel_simple *p = to_panel_simple(panel);
+ 	int ret;
++    
++     printk("panel_simple_prepare.................\n");
+ 
+ 	/* Preparing when already prepared is a no-op */
+ 	if (p->prepared)
+@@ -496,6 +501,8 @@ static int panel_simple_prepare(struct drm_panel *panel)
+ static int panel_simple_enable(struct drm_panel *panel)
+ {
+ 	struct panel_simple *p = to_panel_simple(panel);
++    
++    printk("panel_simple_enable.................\n");
+ 
+ 	if (p->enabled)
+ 		return 0;
+@@ -690,14 +697,26 @@ static int panel_simple_probe(struct device *dev, const struct panel_desc *desc,
+ 	if (IS_ERR(panel->supply))
+ 		return PTR_ERR(panel->supply);
+ 
+-	panel->enable_gpio = devm_gpiod_get_optional(dev, "enable",
+-						     GPIOD_OUT_LOW);
++	panel->enable_gpio = devm_gpiod_get_optional(dev, "enable",GPIOD_OUT_LOW);
++    
+ 	if (IS_ERR(panel->enable_gpio)) {
+ 		err = PTR_ERR(panel->enable_gpio);
+ 		if (err != -EPROBE_DEFER)
+ 			dev_err(dev, "failed to request GPIO: %d\n", err);
+ 		return err;
+ 	}
++	
++	dev_err(dev, "enable_gpio.........................aaron\n");
++	gpiod_set_value_cansleep(panel->enable_gpio, 0);
++    msleep(100);
++//     gpiod_set_value_cansleep(panel->enable_gpio, 1);
++    
++    panel->reset_gpio = devm_gpiod_get_optional(dev, "reset",GPIOD_OUT_LOW);
++    gpiod_set_value_cansleep(panel->reset_gpio, 0);
++    msleep(200);
++    gpiod_set_value_cansleep(panel->reset_gpio, 1);
++    msleep(200);
++    gpiod_set_value_cansleep(panel->enable_gpio, 1);
+ 
+ 	err = of_drm_get_panel_orientation(dev->of_node, &panel->orientation);
+ 	if (err) {
+@@ -725,6 +744,9 @@ static int panel_simple_probe(struct device *dev, const struct panel_desc *desc,
+ 		if (!of_get_display_timing(dev->of_node, "panel-timing", &dt))
+ 			panel_simple_parse_panel_timing_node(dev, panel, &dt);
+ 	}
++	
++	dev_err(dev, "connector_type          = %d .........................\n",desc->connector_type);
++    dev_err(dev, "DRM_MODE_CONNECTOR_LVDS = %d .........................\n",DRM_MODE_CONNECTOR_LVDS);
+ 
+ 	connector_type = desc->connector_type;
+ 	/* Catch common mistakes for panels. */
+@@ -791,6 +813,8 @@ static int panel_simple_probe(struct device *dev, const struct panel_desc *desc,
+ 	pm_runtime_enable(dev);
+ 	pm_runtime_set_autosuspend_delay(dev, 1000);
+ 	pm_runtime_use_autosuspend(dev);
++    
++    dev_err(dev, "drm_panel_init  .............................\n");
+ 
+ 	drm_panel_init(&panel->base, dev, &panel_simple_funcs, connector_type);
+ 
+@@ -806,6 +830,8 @@ static int panel_simple_probe(struct device *dev, const struct panel_desc *desc,
+ 		if (err)
+ 			goto disable_pm_runtime;
+ 	}
++	
++	dev_err(dev, "drm_panel_add  .............................\n");
+ 
+ 	drm_panel_add(&panel->base);
+ 
+@@ -2868,6 +2894,47 @@ static const struct panel_desc jdi_tx26d202vm0bwa = {
+ 	.connector_type = DRM_MODE_CONNECTOR_LVDS,
+ };
+ 
++///////////// aaron ///////////////////////////////////////////////////////////////////////////////////////////////////////
++
++static const struct display_timing suniverse_st080hdldn00_timing = {
++	.pixelclock = { 58520000, 63720000, 76280000 },
++	.hactive = { 1280, 1280, 1280 },
++	.hfront_porch = { 200, 200, 200 },
++	.hback_porch = { 100, 100, 100 },
++	.hsync_len = { 100, 100, 100 },
++	.vactive = { 720, 720, 720},
++	.vfront_porch = { 10, 10, 10 },
++	.vback_porch = { 10, 10, 10 },
++	.vsync_len = { 5, 5, 5 },
++	.flags = DISPLAY_FLAGS_DE_HIGH,
++};
++
++static const struct panel_desc suniverse_st080hdldn00 = {
++	.timings = &suniverse_st080hdldn00_timing,
++	.num_timings = 1,
++	.bpc = 8,
++	.size = {
++		.width = 217,
++		.height = 136,
++	},
++	.delay = {
++		/*
++		 * The panel spec recommends one second delay
++		 * to the below items.  However, it's a bit too
++		 * long in pratice.  Based on tests, it turns
++		 * out 100 milliseconds is fine.
++		 */
++		.prepare = 100,
++		.enable = 100,
++		.unprepare = 100,
++		.disable = 100,
++	},
++	.bus_format = MEDIA_BUS_FMT_RGB666_1X7X3_SPWG,  //MEDIA_BUS_FMT_RGB666_1X7X3_SPWG MEDIA_BUS_FMT_RGB888_1X7X4_SPWG
++	.connector_type = DRM_MODE_CONNECTOR_LVDS,
++};
++
++///////////////////////////////////////////////////////////////////////////////////////////////////////
++
+ static const struct display_timing koe_tx14d24vm1bpa_timing = {
+ 	.pixelclock = { 5580000, 5850000, 6200000 },
+ 	.hactive = { 320, 320, 320 },
+@@ -4736,6 +4803,9 @@ static const struct of_device_id platform_of_match[] = {
+ 	}, {
+ 		.compatible = "jdi,tx26d202vm0bwa",
+ 		.data = &jdi_tx26d202vm0bwa,
++	}, {
++		.compatible = "suniverse,st080hdldn00", //aaron
++		.data = &suniverse_st080hdldn00,
+ 	}, {
+ 		.compatible = "koe,tx14d24vm1bpa",
+ 		.data = &koe_tx14d24vm1bpa,
+@@ -5318,6 +5388,8 @@ static struct dp_aux_ep_driver panel_simple_dp_aux_ep_driver = {
+ static int __init panel_simple_init(void)
+ {
+ 	int err;
++    
++    printk("panel_simple_init  .............................\n");
+ 
+ 	err = platform_driver_register(&panel_simple_platform_driver);
+ 	if (err < 0)
+diff --git a/qbic/sources/linux-imx-5.15.5/drivers/video/backlight/pwm_bl.c b/qbic/sources/linux-imx-5.15.5/drivers/video/backlight/pwm_bl.c
+index a8823e317..c80e078e9 100644
+--- a/qbic/sources/linux-imx-5.15.5/drivers/video/backlight/pwm_bl.c
++++ b/qbic/sources/linux-imx-5.15.5/drivers/video/backlight/pwm_bl.c
+@@ -478,6 +478,8 @@ static int pwm_backlight_probe(struct platform_device *pdev)
+ 	struct pwm_state state;
+ 	unsigned int i;
+ 	int ret;
++    
++    dev_err(&pdev->dev, "pwm_backlight_probe..............\n");
+ 
+ 	if (!data) {
+ 		ret = pwm_backlight_parse_dt(&pdev->dev, &defdata);
+@@ -515,13 +517,13 @@ static int pwm_backlight_probe(struct platform_device *pdev)
+ 						  GPIOD_ASIS);
+ 	if (IS_ERR(pb->enable_gpio)) {
+ 		ret = PTR_ERR(pb->enable_gpio);
+-		goto err_alloc;
++		//goto err_alloc;
+ 	}
+ 
+ 	pb->power_supply = devm_regulator_get(&pdev->dev, "power");
+ 	if (IS_ERR(pb->power_supply)) {
+ 		ret = PTR_ERR(pb->power_supply);
+-		goto err_alloc;
++		//goto err_alloc;
+ 	}
+ 
+ 	pb->pwm = devm_pwm_get(&pdev->dev, NULL);
+@@ -538,8 +540,8 @@ static int pwm_backlight_probe(struct platform_device *pdev)
+ 		goto err_alloc;
+ 	}
+ 
+-	dev_dbg(&pdev->dev, "got pwm for backlight\n");
+-
++	dev_err(&pdev->dev, "got pwm for backlight\n");
++    
+ 	/* Sync up PWM state. */
+ 	pwm_init_state(pb->pwm, &state);
+ 
+@@ -612,6 +614,9 @@ static int pwm_backlight_probe(struct platform_device *pdev)
+ 		 */
+ 		pb->scale = data->max_brightness;
+ 	}
++	
++	dev_err(&pdev->dev, "pwm_backlight_probe.......pb->scale=%d.......\n",pb->scale);
++
+ 
+ 	pb->lth_brightness = data->lth_brightness * (div_u64(state.period,
+ 				pb->scale));
+-- 
+2.25.1
+

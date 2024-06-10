@@ -1,0 +1,31 @@
+From 3acc5c028f27539d8ec210ebb16336c7ee61c35b Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Wed, 11 May 2022 08:44:00 +0800
+Subject: [PATCH 35/40] add rtc
+
+---
+ qbic/sources/linux-imx-5.15.5/drivers/rtc/rtc-pcf85063.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/qbic/sources/linux-imx-5.15.5/drivers/rtc/rtc-pcf85063.c b/qbic/sources/linux-imx-5.15.5/drivers/rtc/rtc-pcf85063.c
+index 14da4ab30..1d6469f6d 100644
+--- a/qbic/sources/linux-imx-5.15.5/drivers/rtc/rtc-pcf85063.c
++++ b/qbic/sources/linux-imx-5.15.5/drivers/rtc/rtc-pcf85063.c
+@@ -89,10 +89,10 @@ static int pcf85063_rtc_read_time(struct device *dev, struct rtc_time *tm)
+ 		return rc;
+ 
+ 	/* if the clock has lost its power it makes no sense to use its time */
+-	if (regs[0] & PCF85063_REG_SC_OS) {
+-		dev_warn(&pcf85063->rtc->dev, "Power loss detected, invalid time\n");
+-		return -EINVAL;
+-	}
++// 	if (regs[0] & PCF85063_REG_SC_OS) {
++// 		dev_warn(&pcf85063->rtc->dev, "Power loss detected, invalid time\n");
++// 		return -EINVAL;
++// 	}
+ 
+ 	tm->tm_sec = bcd2bin(regs[0] & 0x7F);
+ 	tm->tm_min = bcd2bin(regs[1] & 0x7F);
+-- 
+2.25.1
+

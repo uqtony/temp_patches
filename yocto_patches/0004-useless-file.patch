@@ -1,0 +1,55 @@
+From 795c821a51d8c027bd831ce2a2c417940cb9df61 Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Fri, 15 Apr 2022 14:57:17 +0800
+Subject: [PATCH 04/40] useless file
+
+---
+ .../conf/machine/imx8mp-bsdxx00.conf          | 36 -------------------
+ 1 file changed, 36 deletions(-)
+ delete mode 100644 sources/meta-freescale/conf/machine/imx8mp-bsdxx00.conf
+
+diff --git a/sources/meta-freescale/conf/machine/imx8mp-bsdxx00.conf b/sources/meta-freescale/conf/machine/imx8mp-bsdxx00.conf
+deleted file mode 100644
+index e026b9058..000000000
+--- a/sources/meta-freescale/conf/machine/imx8mp-bsdxx00.conf
++++ /dev/null
+@@ -1,36 +0,0 @@
+-#@TYPE: Machine
+-#@NAME: NXP i.MX 8M Plus EVK with LPDDR4
+-#@SOC: i.MX8MP
+-#@DESCRIPTION: Machine configuration for NXP i.MX 8M Plus Evaluation Kit with LPDDR4
+-#@MAINTAINER: Jun Zhu <junzhu@nxp.com>
+-
+-require include/imx8mp-qbic.inc
+-
+-# The device tree name is implicit for LPDDR4, so can't use MACHINE here
+-KERNEL_DEVICETREE_BASENAME = "imx8mp-bds0800"
+-
+-# NXP kernel has additional DTB files for various board configuration and
+-# derivates. Include them here for NXP BSP only
+-KERNEL_DEVICETREE_append_use-nxp-bsp = "  \
+-	freescale/imx8mp-evk.dtb \
+-	freescale/imx8mp-bds0800.dtb \
+-"
+-
+-
+-
+-
+-UBOOT_CONFIG_BASENAME = "imx8mp_evk"
+-UBOOT_CONFIG[fspi] = "${UBOOT_CONFIG_BASENAME}_defconfig"
+-
+-# Set DDR FIRMWARE
+-DDR_FIRMWARE_VERSION = "202006"
+-DDR_FIRMWARE_NAME = " \
+-	lpddr4_pmu_train_1d_dmem_${DDR_FIRMWARE_VERSION}.bin \
+-	lpddr4_pmu_train_1d_imem_${DDR_FIRMWARE_VERSION}.bin \
+-	lpddr4_pmu_train_2d_dmem_${DDR_FIRMWARE_VERSION}.bin \
+-	lpddr4_pmu_train_2d_imem_${DDR_FIRMWARE_VERSION}.bin \
+-"
+-
+-IMXBOOT_TARGETS_BASENAME = "flash_evk"
+-
+-BB_NUMBER_THREADS = "20"
+-- 
+2.25.1
+

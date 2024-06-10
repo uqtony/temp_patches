@@ -1,0 +1,141 @@
+From afd417880f05df7f018b31de2c6131227f71b9c2 Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Tue, 24 May 2022 16:03:39 +0800
+Subject: [PATCH 37/40] add new device
+
+---
+ .../boot/dts/freescale/imx8mp-bds0800.dts     | 64 ++++++++++++-------
+ 1 file changed, 42 insertions(+), 22 deletions(-)
+
+diff --git a/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts b/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts
+index 29c33bdcb..38b526f22 100644
+--- a/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts
++++ b/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts
+@@ -51,17 +51,17 @@ sound-wm8960 {
+ 			"LINPUT3", "Mic Jack";
+ 	};
+ 
+-// 	sound-micfil {
+-// 		compatible = "fsl,imx-audio-card";
+-// 		model = "imx-audio-micfil";
+-// 		pri-dai-link {
+-// 			link-name = "micfil hifi";
+-// 			format = "i2s";
+-// 			cpu {
+-// 				sound-dai = <&micfil>;
+-// 			};
+-// 		};
+-// 	};
++	sound-micfil {
++		compatible = "fsl,imx-audio-card";
++		model = "imx-audio-micfil";
++		pri-dai-link {
++			link-name = "micfil hifi";
++			format = "i2s";
++			cpu {
++				sound-dai = <&micfil>;
++			};
++		};
++	};
+ 
+ 	lvds_backlight: lvds_backlight {
+ 		compatible = "pwm-backlight";
+@@ -386,6 +386,19 @@ codec: wm8960@1a {
+ 
+ };
+ 
++&i2c4 {
++	clock-frequency = <400000>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_i2c4>;
++	status = "okay";
++    
++	hdc2010@41 {
++		compatible = "ti,hdc2010";
++		reg = <0x41>;
++	};
++
++};
++
+ 
+ &lcdif2 {
+ 	status = "okay";
+@@ -433,7 +446,7 @@ &micfil {
+ 	assigned-clocks = <&clk IMX8MP_CLK_PDM>;
+ 	assigned-clock-parents = <&clk IMX8MP_AUDIO_PLL1_OUT>;
+ 	assigned-clock-rates = <196608000>;
+-	status = "disabled";
++	status = "okay";
+ };
+ 
+ &pcie{
+@@ -577,10 +590,10 @@ &usb_dwc3_1 {
+ 	status = "okay";
+ };
+ 
+-&uart3 {
++&uart4 {
+ 	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_uart3>;
+-	assigned-clocks = <&clk IMX8MP_CLK_UART3>;
++	pinctrl-0 = <&pinctrl_uart4>;
++	assigned-clocks = <&clk IMX8MP_CLK_UART4>;
+ 	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_80M>;
+ 	fsl,uart-has-rtscts;
+ 	status = "okay";
+@@ -635,7 +648,8 @@ MX8MP_IOMUXC_ECSPI2_MISO__ECSPI2_MISO		0x82
+ 
+ 	pinctrl_ecspi2_cs: ecspi2cs {
+ 		fsl,pins = <
+-			MX8MP_IOMUXC_ECSPI2_SS0__GPIO5_IO13		0x40000
++// 			MX8MP_IOMUXC_ECSPI2_SS0__GPIO5_IO13		0x40000
++			MX8MP_IOMUXC_SAI5_MCLK__GPIO3_IO25		0x40000
+ 		>;
+ 	};
+ 
+@@ -681,6 +695,7 @@ pinctrl_lvds_panel: gpiopanelgrp {
+ 			MX8MP_IOMUXC_GPIO1_IO06__GPIO1_IO06	0x16
+ 			MX8MP_IOMUXC_GPIO1_IO07__GPIO1_IO07	0x16
+ 			MX8MP_IOMUXC_GPIO1_IO11__GPIO1_IO11	0x16
++			MX8MP_IOMUXC_SAI5_MCLK__GPIO3_IO25	0x16
+ // 			MX8MP_IOMUXC_SAI5_RXD3__GPIO3_IO24	0x16
+ 		>;
+ 	};
+@@ -705,10 +720,17 @@ MX8MP_IOMUXC_I2C3_SCL__I2C3_SCL		0x400001c2
+ 			MX8MP_IOMUXC_I2C3_SDA__I2C3_SDA		0x400001c2
+ 		>;
+ 	};
++    
++	pinctrl_i2c4: i2c4grp {
++		fsl,pins = <
++			MX8MP_IOMUXC_I2C4_SCL__I2C4_SCL		0x400001c2
++			MX8MP_IOMUXC_I2C4_SDA__I2C4_SDA		0x400001c2
++		>;
++	};
+ 
+ 	pinctrl_pcie: pciegrp {
+ 		fsl,pins = <
+-			MX8MP_IOMUXC_UART4_RXD__PCIE_CLKREQ_B		0x61 /* open drain, pull up */
++			//MX8MP_IOMUXC_UART4_RXD__PCIE_CLKREQ_B		0x61 /* open drain, pull up */
+ 			MX8MP_IOMUXC_SAI5_RXD3__GPIO3_IO24		0x41   //disable 
+ 			MX8MP_IOMUXC_SAI1_TXD2__GPIO4_IO14		0x41   //reset
+ 			MX8MP_IOMUXC_SAI1_TXD0__GPIO4_IO12		0x1c4
+@@ -796,12 +818,10 @@ MX8MP_IOMUXC_GPIO1_IO14__USB2_PWR		0x19
+ 		>;
+ 	};
+ 
+-	pinctrl_uart3: uart3grp {
++	pinctrl_uart4: uart4grp {
+ 		fsl,pins = <
+-			MX8MP_IOMUXC_ECSPI1_SCLK__UART3_DCE_RX		0x140
+-			MX8MP_IOMUXC_ECSPI1_MOSI__UART3_DCE_TX		0x140
+-			MX8MP_IOMUXC_ECSPI1_SS0__UART3_DCE_RTS		0x140
+-			MX8MP_IOMUXC_ECSPI1_MISO__UART3_DCE_CTS		0x140
++			MX8MP_IOMUXC_UART4_RXD__UART4_DCE_RX	0x140
++			MX8MP_IOMUXC_UART4_TXD__UART4_DCE_TX	0x140
+ 		>;
+ 	};
+ 
+-- 
+2.25.1
+

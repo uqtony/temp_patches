@@ -1,0 +1,51 @@
+From a6e586ba64ef0ac3b68a28b4e63f3a0849d15b16 Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Wed, 11 May 2022 08:40:09 +0800
+Subject: [PATCH 31/40] add customize script
+
+---
+ .../initscripts/initscripts-1.0/customize.sh  | 32 +++++++++++++++++++
+ 1 file changed, 32 insertions(+)
+ create mode 100644 sources/poky/meta/recipes-core/initscripts/initscripts-1.0/customize.sh
+
+diff --git a/sources/poky/meta/recipes-core/initscripts/initscripts-1.0/customize.sh b/sources/poky/meta/recipes-core/initscripts/initscripts-1.0/customize.sh
+new file mode 100644
+index 000000000..32c2ed32c
+--- /dev/null
++++ b/sources/poky/meta/recipes-core/initscripts/initscripts-1.0/customize.sh
+@@ -0,0 +1,32 @@
++#!/bin/sh
++### BEGIN INIT INFO
++# Provides: banner
++# Required-Start:
++# Required-Stop:
++# Default-Start:     S
++# Default-Stop:
++### END INIT INFO
++
++echo "Running Customizing script................................................................"
++		#aaron
++		/usr/lib/libgpiod/ptest/tests/gpioset 0 11=1
++		/usr/lib/libgpiod/ptest/tests/gpioset 3 9=1
++		/usr/lib/libgpiod/ptest/tests/gpioset 4 5=1
++		chromium --no-sandbox &
++		
++		
++		
++		
++		
++		
++		
++		
++		
++		
++		
++		
++		
++		
++		
++		
++echo "Running Customizing script.........................................DONE......................."
+-- 
+2.25.1
+

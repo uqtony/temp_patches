@@ -1,0 +1,33 @@
+From 13b4bc094b189384cc99faf1c761a958404c6797 Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Tue, 3 May 2022 12:38:25 +0800
+Subject: [PATCH 28/40] add necessary package for electron
+
+---
+ qbic/meta-qbic/recipes-images/qbic-image-full.bb | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/qbic/meta-qbic/recipes-images/qbic-image-full.bb b/qbic/meta-qbic/recipes-images/qbic-image-full.bb
+index 1064d5f28..780d9a11e 100644
+--- a/qbic/meta-qbic/recipes-images/qbic-image-full.bb
++++ b/qbic/meta-qbic/recipes-images/qbic-image-full.bb
+@@ -12,6 +12,16 @@ CONFLICT_DISTRO_FEATURES = "directfb"
+ IMAGE_INSTALL += " \
+     chromium-ozone-wayland \
+     isp-imx \
++    libgpiod \
++    git \
++    nodejs \
++    nodejs-npm \
++    cups \
++    libxscrnsaver \
++    at-spi2-atk \
++    libxcomposite \
++    libxrandr \
++    nss \
+ "
+ 
+ do_copy_debian_fs(){
+-- 
+2.25.1
+

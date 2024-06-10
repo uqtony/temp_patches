@@ -1,0 +1,85 @@
+From a12dd1515fcb047dcfe28453466c5e294099939c Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Wed, 11 May 2022 08:39:41 +0800
+Subject: [PATCH 30/40] add file for ppp
+
+---
+ .../recipes-connectivity/ppp/ppp/mobile-auth  |  4 ++++
+ .../ppp/ppp/mobile-modem.chat                 | 20 +++++++++++++++++++
+ .../ppp/ppp/mobile-noauth                     |  2 ++
+ .../ppp/ppp/options-mobile                    | 16 +++++++++++++++
+ 4 files changed, 42 insertions(+)
+ create mode 100644 sources/poky/meta/recipes-connectivity/ppp/ppp/mobile-auth
+ create mode 100644 sources/poky/meta/recipes-connectivity/ppp/ppp/mobile-modem.chat
+ create mode 100644 sources/poky/meta/recipes-connectivity/ppp/ppp/mobile-noauth
+ create mode 100644 sources/poky/meta/recipes-connectivity/ppp/ppp/options-mobile
+
+diff --git a/sources/poky/meta/recipes-connectivity/ppp/ppp/mobile-auth b/sources/poky/meta/recipes-connectivity/ppp/ppp/mobile-auth
+new file mode 100644
+index 000000000..f50185f51
+--- /dev/null
++++ b/sources/poky/meta/recipes-connectivity/ppp/ppp/mobile-auth
+@@ -0,0 +1,4 @@
++file /etc/ppp/options-mobile
++user "your_usr"
++password "your_pass"
++connect "/usr/sbin/chat -v -t15 -f /etc/ppp/mobile-modem.chat"
+diff --git a/sources/poky/meta/recipes-connectivity/ppp/ppp/mobile-modem.chat b/sources/poky/meta/recipes-connectivity/ppp/ppp/mobile-modem.chat
+new file mode 100644
+index 000000000..a5c545cc0
+--- /dev/null
++++ b/sources/poky/meta/recipes-connectivity/ppp/ppp/mobile-modem.chat
+@@ -0,0 +1,20 @@
++ABORT 'BUSY'
++ABORT 'NO CARRIER'
++ABORT 'VOICE'
++ABORT 'NO DIALTONE'
++ABORT 'NO DIAL TONE'
++ABORT 'NO ANSWER'
++ABORT 'DELAYED'
++REPORT CONNECT
++TIMEOUT 6
++'' 'ATQ0'
++'OK-AT-OK' 'ATZ'
++TIMEOUT 3
++'OK' 'AT+CPIN=0000'
++'OK\d-AT-OK' 'ATI'
++'OK' 'ATZ'
++'OK' 'ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0'
++'OK-AT-OK' 'AT+CGDCONT=1,"IP","internet"'
++'OK' 'ATDT*99***1#'
++TIMEOUT 30
++CONNECT ''
+diff --git a/sources/poky/meta/recipes-connectivity/ppp/ppp/mobile-noauth b/sources/poky/meta/recipes-connectivity/ppp/ppp/mobile-noauth
+new file mode 100644
+index 000000000..9d0ca452c
+--- /dev/null
++++ b/sources/poky/meta/recipes-connectivity/ppp/ppp/mobile-noauth
+@@ -0,0 +1,2 @@
++file /etc/ppp/options-mobile
++connect "/usr/sbin/chat -v -t15 -f /etc/ppp/mobile-modem.chat"
+diff --git a/sources/poky/meta/recipes-connectivity/ppp/ppp/options-mobile b/sources/poky/meta/recipes-connectivity/ppp/ppp/options-mobile
+new file mode 100644
+index 000000000..b84473c68
+--- /dev/null
++++ b/sources/poky/meta/recipes-connectivity/ppp/ppp/options-mobile
+@@ -0,0 +1,16 @@
++ttyUSB2
++921600
++lock
++crtscts
++modem
++passive
++novj
++defaultroute
++noipdefault
++usepeerdns
++noauth
++hide-password
++persist
++holdoff 10
++maxfail 0
++debug
+-- 
+2.25.1
+

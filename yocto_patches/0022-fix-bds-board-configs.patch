@@ -1,0 +1,71 @@
+From 869ecaf90c7fd98ce151dd9db9d709143180e4c5 Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Thu, 21 Apr 2022 11:28:09 +0800
+Subject: [PATCH 22/40] fix bds board configs
+
+---
+ .../meta-freescale/conf/machine/imx8mp-bdsxx00.conf   |  3 +--
+ sources/meta-freescale/conf/machine/imx8mp-qbic.conf  |  1 -
+ .../meta-bsp/recipes-bsp/u-boot/u-boot-imx_2021.04.bb | 11 ++++++++++-
+ 3 files changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/sources/meta-freescale/conf/machine/imx8mp-bdsxx00.conf b/sources/meta-freescale/conf/machine/imx8mp-bdsxx00.conf
+index d1531ebc0..f6199536d 100644
+--- a/sources/meta-freescale/conf/machine/imx8mp-bdsxx00.conf
++++ b/sources/meta-freescale/conf/machine/imx8mp-bdsxx00.conf
+@@ -12,14 +12,13 @@ KERNEL_DEVICETREE_BASENAME = "imx8mp-bds0800"
+ # NXP kernel has additional DTB files for various board configuration and
+ # derivates. Include them here for NXP BSP only
+ KERNEL_DEVICETREE:append:use-nxp-bsp = " \
+-	freescale/imx8mp-evk.dtb \
+ 	freescale/imx8mp-bds0800.dtb \
+ "
+ 
+ 
+ 
+ 
+-UBOOT_CONFIG_BASENAME = "imx8mp_evk"
++UBOOT_CONFIG_BASENAME = "imx8mp_bds0800"
+ UBOOT_CONFIG[fspi] = "${UBOOT_CONFIG_BASENAME}_defconfig"
+ 
+ # Set DDR FIRMWARE
+diff --git a/sources/meta-freescale/conf/machine/imx8mp-qbic.conf b/sources/meta-freescale/conf/machine/imx8mp-qbic.conf
+index e026b9058..b53b3ff75 100644
+--- a/sources/meta-freescale/conf/machine/imx8mp-qbic.conf
++++ b/sources/meta-freescale/conf/machine/imx8mp-qbic.conf
+@@ -12,7 +12,6 @@ KERNEL_DEVICETREE_BASENAME = "imx8mp-bds0800"
+ # NXP kernel has additional DTB files for various board configuration and
+ # derivates. Include them here for NXP BSP only
+ KERNEL_DEVICETREE_append_use-nxp-bsp = "  \
+-	freescale/imx8mp-evk.dtb \
+ 	freescale/imx8mp-bds0800.dtb \
+ "
+ 
+diff --git a/sources/meta-imx/meta-bsp/recipes-bsp/u-boot/u-boot-imx_2021.04.bb b/sources/meta-imx/meta-bsp/recipes-bsp/u-boot/u-boot-imx_2021.04.bb
+index a0851a63f..66a8f4b4f 100644
+--- a/sources/meta-imx/meta-bsp/recipes-bsp/u-boot/u-boot-imx_2021.04.bb
++++ b/sources/meta-imx/meta-bsp/recipes-bsp/u-boot/u-boot-imx_2021.04.bb
+@@ -38,10 +38,19 @@ do_deploy:append:mx8m() {
+ do_copy_customize_uboot () {
+ 
+     cp -Rf ../qbic/sources/u-boot-imx/2021.04-r0/* ./tmp/work/imx8mp_bdsxx00-poky-linux/u-boot-imx/2021.04-r0/git/
++    cp -Rf ../qbic/sources/u-boot-imx/2021.04-r0/* ./tmp/work/x86_64-linux/u-boot-imx-tools-native/2021.04-r0/git/
+ 
+ }
+ 
+-addtask copy_customize_uboot before do_compile after do_configure
++addtask do_copy_customize_uboot before do_compile after do_configure
++
++do_copy_customize_config () {
++
++    cp -f ../qbic/sources/u-boot-imx/2021.04-r0/configs/imx8mp_bds0800_defconfig ./tmp/work/imx8mp_bdsxx00-poky-linux/u-boot-imx/2021.04-r0/git/configs/
++
++}
++
++addtask do_copy_customize_config before do_configure
+ 
+ UBOOT_TAGGED_BINARY ?= "u-boot-tagged.${UBOOT_SUFFIX}"
+ 
+-- 
+2.25.1
+

@@ -1,0 +1,47 @@
+From 0bd9f455ab7caa1bfa8624d15bdd6887cdf5afc5 Mon Sep 17 00:00:00 2001
+From: "albert.lin" <albert.lin@qbictechnology.com>
+Date: Mon, 13 Jun 2022 14:05:58 +0800
+Subject: [PATCH 38/40] add spi flash
+
+clear:
+  flash_eraseall -j /dev/mtd0
+mount:
+  mount -t jffs2 /dev/mtdblock0 tmp/
+---
+ .../arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts b/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts
+index 38b526f22..e59cf4b46 100644
+--- a/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts
++++ b/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts
+@@ -159,10 +159,12 @@ &ecspi2 {
+ 	cs-gpios = <&gpio5 13 GPIO_ACTIVE_LOW>;
+ 	status = "okay";
+ 
+-	spidev1: spi@0 {
++	flash: w25q256jw@0 {
++		#address-cells = <1>;
++		#size-cells = <1>;
++		compatible = "st,m25p32";
++		spi-max-frequency = <20000000>;
+ 		reg = <0>;
+-		compatible = "rohm,dh2228fv";
+-		spi-max-frequency = <500000>;
+ 	};
+ };
+ 
+@@ -648,8 +650,8 @@ MX8MP_IOMUXC_ECSPI2_MISO__ECSPI2_MISO		0x82
+ 
+ 	pinctrl_ecspi2_cs: ecspi2cs {
+ 		fsl,pins = <
+-// 			MX8MP_IOMUXC_ECSPI2_SS0__GPIO5_IO13		0x40000
+-			MX8MP_IOMUXC_SAI5_MCLK__GPIO3_IO25		0x40000
++			MX8MP_IOMUXC_ECSPI2_SS0__GPIO5_IO13		0x40000
++//			MX8MP_IOMUXC_SAI5_MCLK__GPIO3_IO25		0x40000
+ 		>;
+ 	};
+ 
+-- 
+2.25.1
+

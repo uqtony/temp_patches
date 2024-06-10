@@ -1,0 +1,65 @@
+From 933f209c9e2b68ffd79ff67ee898d878c03e36fc Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Thu, 21 Apr 2022 10:58:58 +0800
+Subject: [PATCH 21/40] fix uboot configs
+
+---
+ .../u-boot-imx/2021.04-r0/arch/arm/dts/Makefile      |  1 +
+ .../2021.04-r0/configs/imx8mp_bds0800_defconfig      |  2 +-
+ .../2021.04-r0/include/configs/imx8mp_evk.h          | 12 +++++-------
+ 3 files changed, 7 insertions(+), 8 deletions(-)
+
+diff --git a/qbic/sources/u-boot-imx/2021.04-r0/arch/arm/dts/Makefile b/qbic/sources/u-boot-imx/2021.04-r0/arch/arm/dts/Makefile
+index 24a387fb6..1100b35c1 100644
+--- a/qbic/sources/u-boot-imx/2021.04-r0/arch/arm/dts/Makefile
++++ b/qbic/sources/u-boot-imx/2021.04-r0/arch/arm/dts/Makefile
+@@ -876,6 +876,7 @@ dtb-$(CONFIG_ARCH_IMX8M) += \
+ 	imx8mq-phanbell.dtb \
+ 	imx8mp-ddr4-evk.dtb \
+ 	imx8mp-evk.dtb \
++	imx8mp-bds0800.dtb \
+ 	imx8mp-phyboard-pollux-rdk.dtb \
+ 	imx8mq-pico-pi.dtb \
+ 	imx8mm-ddr4-ab2.dtb \
+diff --git a/qbic/sources/u-boot-imx/2021.04-r0/configs/imx8mp_bds0800_defconfig b/qbic/sources/u-boot-imx/2021.04-r0/configs/imx8mp_bds0800_defconfig
+index 21836967a..bd7e82f01 100644
+--- a/qbic/sources/u-boot-imx/2021.04-r0/configs/imx8mp_bds0800_defconfig
++++ b/qbic/sources/u-boot-imx/2021.04-r0/configs/imx8mp_bds0800_defconfig
+@@ -22,7 +22,7 @@ CONFIG_SPL_SERIAL_SUPPORT=y
+ CONFIG_SPL_DRIVERS_MISC_SUPPORT=y
+ CONFIG_SPL=y
+ CONFIG_SPL_IMX_ROMAPI_LOADADDR=0x48000000
+-CONFIG_DEFAULT_DEVICE_TREE="imx8mp-evk"
++CONFIG_DEFAULT_DEVICE_TREE="imx8mp-bds0800"
+ CONFIG_DISTRO_DEFAULTS=y
+ CONFIG_FIT=y
+ CONFIG_FIT_EXTERNAL_OFFSET=0x3000
+diff --git a/qbic/sources/u-boot-imx/2021.04-r0/include/configs/imx8mp_evk.h b/qbic/sources/u-boot-imx/2021.04-r0/include/configs/imx8mp_evk.h
+index 48a3a346a..f2ba45344 100644
+--- a/qbic/sources/u-boot-imx/2021.04-r0/include/configs/imx8mp_evk.h
++++ b/qbic/sources/u-boot-imx/2021.04-r0/include/configs/imx8mp_evk.h
+@@ -209,16 +209,14 @@
+ /* Size of malloc() pool */
+ #define CONFIG_SYS_MALLOC_LEN		SZ_32M
+ 
+-/* Totally 6GB DDR */
++/* Totally 4GB DDR */
+ #define CONFIG_SYS_SDRAM_BASE		0x40000000
+ #define PHYS_SDRAM			0x40000000
+-#define PHYS_SDRAM_SIZE			0xC0000000	/* 3 GB */
++#define PHYS_SDRAM_SIZE			0x80000000	/* 2 GB */
++
+ #define PHYS_SDRAM_2			0x100000000
+-#ifdef CONFIG_TARGET_IMX8MP_DDR4_EVK
+-#define PHYS_SDRAM_2_SIZE		0x40000000	/* 1 GB */
+-#else
+-#define PHYS_SDRAM_2_SIZE		0xC0000000	/* 3 GB */
+-#endif
++#define PHYS_SDRAM_2_SIZE		0x80000000	/* 2 GB */
++
+ 
+ #define CONFIG_MXC_UART_BASE		UART2_BASE_ADDR
+ 
+-- 
+2.25.1
+

@@ -1,0 +1,36 @@
+From c84a5b8c8f9026ebcbf45c9e6197abadf64b8b3d Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Tue, 3 May 2022 12:37:46 +0800
+Subject: [PATCH 27/40] core image bb file
+
+---
+ .../meta-qbic/recipes-images/qbic-image-core.bb | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+ create mode 100644 qbic/meta-qbic/recipes-images/qbic-image-core.bb
+
+diff --git a/qbic/meta-qbic/recipes-images/qbic-image-core.bb b/qbic/meta-qbic/recipes-images/qbic-image-core.bb
+new file mode 100644
+index 000000000..ac6e72965
+--- /dev/null
++++ b/qbic/meta-qbic/recipes-images/qbic-image-core.bb
+@@ -0,0 +1,17 @@
++# Copyright (C) 2015 Freescale Semiconductor
++# Copyright 2017-2020 NXP
++# Released under the MIT license (see COPYING.MIT for the terms)
++
++require ../sources/meta-imx/meta-sdk/recipes-fsl/images/imx-image-core.bb
++# require ../sources/meta-openembedded/meta-oe/recipes-support/libgpiod/libgpiod_1.6.3.bb
++
++
++IMAGE_FEATURES += " \
++    dev-pkgs \
++"
++
++IMAGE_INSTALL += " \
++    libgpiod \
++"
++
++
+-- 
+2.25.1
+

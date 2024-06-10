@@ -1,0 +1,31 @@
+From 02ead10a106cef38076134190b0eefb8a5bc98e3 Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Tue, 3 May 2022 12:39:45 +0800
+Subject: [PATCH 29/40] show screen size
+
+---
+ qbic/sources/linux-imx-5.15.5/drivers/gpu/drm/drm_fb_helper.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/qbic/sources/linux-imx-5.15.5/drivers/gpu/drm/drm_fb_helper.c b/qbic/sources/linux-imx-5.15.5/drivers/gpu/drm/drm_fb_helper.c
+index 8e7a124d6..39ed47325 100644
+--- a/qbic/sources/linux-imx-5.15.5/drivers/gpu/drm/drm_fb_helper.c
++++ b/qbic/sources/linux-imx-5.15.5/drivers/gpu/drm/drm_fb_helper.c
+@@ -1649,11 +1649,13 @@ static int drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper,
+ 			sizes.fb_width  = min_t(u32, desired_mode->hdisplay + x, sizes.fb_width);
+ 		if (lastv)
+ 			sizes.fb_height = min_t(u32, desired_mode->vdisplay + y, sizes.fb_height);
++        
++        drm_info(dev, "drm_client_for_each_modeset....crtc_count=%d..fb_width=%d....fb_height=%d....\n",crtc_count,sizes.fb_width,sizes.fb_height); //aaron
+ 	}
+ 	mutex_unlock(&client->modeset_mutex);
+ 
+ 	if (crtc_count == 0 || sizes.fb_width == -1 || sizes.fb_height == -1) {
+-		drm_info(dev, "Cannot find any crtc or sizes\n");
++		drm_info(dev, "Cannot find any crtc or sizes  crtc_count=%d\n",crtc_count);
+ 
+ 		/* First time: disable all crtc's.. */
+ 		if (!fb_helper->deferred_setup)
+-- 
+2.25.1
+

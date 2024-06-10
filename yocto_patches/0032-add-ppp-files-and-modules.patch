@@ -1,0 +1,106 @@
+From d4ec1e3b2aa93f2f85ca354721e69c6f0b4f63b5 Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Wed, 11 May 2022 08:41:38 +0800
+Subject: [PATCH 32/40] add ppp files and modules
+
+---
+ qbic/sources/linux-imx-5.15.5/.config                    | 9 +++++++++
+ .../arch/arm64/configs/qbic_bdsxx00_defconfig            | 8 ++++++++
+ sources/poky/meta/recipes-connectivity/ppp/ppp/provider  | 4 ++--
+ sources/poky/meta/recipes-connectivity/ppp/ppp_2.4.9.bb  | 9 +++++++++
+ 4 files changed, 28 insertions(+), 2 deletions(-)
+
+diff --git a/qbic/sources/linux-imx-5.15.5/.config b/qbic/sources/linux-imx-5.15.5/.config
+index c00288d1e..13de5b48c 100644
+--- a/qbic/sources/linux-imx-5.15.5/.config
++++ b/qbic/sources/linux-imx-5.15.5/.config
+@@ -267,6 +267,14 @@ CONFIG_DM_CRYPT=m
+ CONFIG_DM_MIRROR=m
+ CONFIG_DM_ZERO=m
+ CONFIG_NETDEVICES=y
++CONFIG_PPP=y
++CONFIG_PPP_MULTILINK=y
++CONFIG_PPP_FILTER=y
++CONFIG_PPP_ASYNC=y
++CONFIG_PPP_SYNC_TTY=y
++CONFIG_PPP_DEFLATE=y
++CONFIG_PPP_BSDCOMP=y
++CONFIG_PPPOE=y
+ CONFIG_MACVLAN=m
+ CONFIG_MACVTAP=m
+ CONFIG_TUN=y
+@@ -794,6 +802,7 @@ CONFIG_RTC_DRV_DS1307=m
+ CONFIG_RTC_DRV_HYM8563=m
+ CONFIG_RTC_DRV_MAX77686=y
+ CONFIG_RTC_DRV_RK808=m
++CONFIG_RTC_DRV_PCF85063=y
+ CONFIG_RTC_DRV_PCF85363=m
+ CONFIG_RTC_DRV_M41T80=m
+ CONFIG_RTC_DRV_RX8581=m
+diff --git a/qbic/sources/linux-imx-5.15.5/arch/arm64/configs/qbic_bdsxx00_defconfig b/qbic/sources/linux-imx-5.15.5/arch/arm64/configs/qbic_bdsxx00_defconfig
+index c00288d1e..1968a798a 100644
+--- a/qbic/sources/linux-imx-5.15.5/arch/arm64/configs/qbic_bdsxx00_defconfig
++++ b/qbic/sources/linux-imx-5.15.5/arch/arm64/configs/qbic_bdsxx00_defconfig
+@@ -267,6 +267,14 @@ CONFIG_DM_CRYPT=m
+ CONFIG_DM_MIRROR=m
+ CONFIG_DM_ZERO=m
+ CONFIG_NETDEVICES=y
++CONFIG_PPP=y
++CONFIG_PPP_MULTILINK=y
++CONFIG_PPP_FILTER=y
++CONFIG_PPP_ASYNC=y
++CONFIG_PPP_SYNC_TTY=y
++CONFIG_PPP_DEFLATE=y
++CONFIG_PPP_BSDCOMP=y
++CONFIG_PPPOE=y
+ CONFIG_MACVLAN=m
+ CONFIG_MACVTAP=m
+ CONFIG_TUN=y
+diff --git a/sources/poky/meta/recipes-connectivity/ppp/ppp/provider b/sources/poky/meta/recipes-connectivity/ppp/ppp/provider
+index e74d71a8e..8394d6690 100644
+--- a/sources/poky/meta/recipes-connectivity/ppp/ppp/provider
++++ b/sources/poky/meta/recipes-connectivity/ppp/ppp/provider
+@@ -12,10 +12,10 @@ user "myusername@realm"
+ # MUST CHANGE: replace ******** with the phone number of your provider.
+ # The /etc/chatscripts/pap chat script may be modified to change the
+ # modem initialization string.
+-connect "/usr/sbin/chat -v -f /etc/chatscripts/pap -T ********"
++connect "/usr/sbin/chat -v -f /etc/ppp/mobile-modem.chat"
+ 
+ # Serial device to which the modem is connected.
+-/dev/modem
++/dev/ttyUSB2
+ 
+ # Speed of the serial line.
+ 115200
+diff --git a/sources/poky/meta/recipes-connectivity/ppp/ppp_2.4.9.bb b/sources/poky/meta/recipes-connectivity/ppp/ppp_2.4.9.bb
+index 235595ff7..2e8f029b9 100644
+--- a/sources/poky/meta/recipes-connectivity/ppp/ppp_2.4.9.bb
++++ b/sources/poky/meta/recipes-connectivity/ppp/ppp_2.4.9.bb
+@@ -24,7 +24,12 @@ SRC_URI = "https://download.samba.org/pub/${BPN}/${BP}.tar.gz \
+            file://ppp_on_boot \
+            file://provider \
+            file://ppp@.service \
++           file://options-mobile \
++           file://mobile-auth \
++           file://mobile-noauth \
++           file://mobile-modem.chat \
+            "
++BB_STRICT_CHECKSUM = "0"
+ 
+ SRC_URI[sha256sum] = "f938b35eccde533ea800b15a7445b2f1137da7f88e32a16898d02dee8adc058d"
+ 
+@@ -62,6 +67,10 @@ do_install:append () {
+ 	install -m 0755 ${WORKDIR}/provider ${D}${sysconfdir}/ppp/peers/provider
+ 	install -d ${D}${systemd_system_unitdir}
+ 	install -m 0644 ${WORKDIR}/ppp@.service ${D}${systemd_system_unitdir}
++	install -m 0755 ${WORKDIR}/options-mobile ${D}${sysconfdir}/ppp/options-mobile
++	install -m 0755 ${WORKDIR}/mobile-auth ${D}${sysconfdir}/ppp/mobile-auth
++	install -m 0755 ${WORKDIR}/mobile-noauth ${D}${sysconfdir}/ppp/mobile-noauth
++	install -m 0755 ${WORKDIR}/mobile-modem.chat ${D}${sysconfdir}/ppp/mobile-modem.chat
+ 	sed -i -e 's,@SBINDIR@,${sbindir},g' \
+ 	       ${D}${systemd_system_unitdir}/ppp@.service
+ 	rm -rf ${D}/${mandir}/man8/man8
+-- 
+2.25.1
+

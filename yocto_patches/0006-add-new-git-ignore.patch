@@ -1,0 +1,25 @@
+From 74101639d9e79551e5832143155d5b67548ad7f9 Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Fri, 15 Apr 2022 15:06:11 +0800
+Subject: [PATCH 06/40] add new git ignore
+
+---
+ .gitignore | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/.gitignore b/.gitignore
+index 9c1bd64ad..cfee51ec3 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -3,3 +3,8 @@ bds1200/
+ downloads/
+ bds0800/**
+ bsd1200/**
++HEAD
++config
++description
++hooks/
++info/
+-- 
+2.25.1
+

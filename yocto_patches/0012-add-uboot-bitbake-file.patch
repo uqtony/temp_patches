@@ -1,0 +1,76 @@
+From 3de383382761d73e4e780dd12ed194b4268348aa Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Mon, 18 Apr 2022 10:30:02 +0800
+Subject: [PATCH 12/40] add uboot bitbake file
+
+---
+ ...-imx_2099.04.bb_ => u-boot-imx_2021.04.bb} | 34 +++++++++++++------
+ 1 file changed, 24 insertions(+), 10 deletions(-)
+ rename qbic/meta-qbic/recipes-override/{u-boot-imx_2099.04.bb_ => u-boot-imx_2021.04.bb} (57%)
+
+diff --git a/qbic/meta-qbic/recipes-override/u-boot-imx_2099.04.bb_ b/qbic/meta-qbic/recipes-override/u-boot-imx_2021.04.bb
+similarity index 57%
+rename from qbic/meta-qbic/recipes-override/u-boot-imx_2099.04.bb_
+rename to qbic/meta-qbic/recipes-override/u-boot-imx_2021.04.bb
+index a57b80cbb..c19ceec39 100644
+--- a/qbic/meta-qbic/recipes-override/u-boot-imx_2099.04.bb_
++++ b/qbic/meta-qbic/recipes-override/u-boot-imx_2021.04.bb
+@@ -3,21 +3,18 @@
+ # Copyright 2017-2021 NXP
+ 
+ require recipes-bsp/u-boot/u-boot.inc
+-require recipes-bsp/u-boot/u-boot-imx-common.inc
++require recipes-bsp/u-boot/u-boot-imx-common_${PV}.inc
+ 
+ PROVIDES += "u-boot"
+ 
+-#UBOOT_SRC ?= "git://source.codeaurora.org/external/imx/uboot-imx.git;protocol=https"
+-
+-UBOOT_SRC = "file://../qbic/sources/u-boot-imx/"
+-
++UBOOT_SRC ?= "git://source.codeaurora.org/external/imx/uboot-imx.git;protocol=https"
+ SRCBRANCH = "lf_v2021.04"
+ SRC_URI = "${UBOOT_SRC};branch=${SRCBRANCH}"
+-SRCREV = "1c0116f3da250c5a52858c53efb8b38c0963f477"
++SRCREV = "f7b43f8b4c1e4e3ee6c6ff2fe9c61b2092e8b96b"
+ 
+ LOCALVERSION = "-${SRCBRANCH}"
+ 
+-do_deploy_append_mx8m() {
++do_deploy:append:mx8m() {
+     # Deploy u-boot-nodtb.bin and fsl-imx8m*-XX.dtb for mkimage to generate boot binary
+     if [ -n "${UBOOT_CONFIG}" ]
+     then
+@@ -38,9 +35,26 @@ do_deploy_append_mx8m() {
+     fi
+ }
+ 
++UBOOT_TAGGED_BINARY ?= "u-boot-tagged.${UBOOT_SUFFIX}"
++
++deploy_tag() {
++    # Append a tag to the bootloader image used in the SD card image
++    cp ${UBOOT_BINARY} ${UBOOT_TAGGED_BINARY}
++    ln -sf ${UBOOT_TAGGED_BINARY} ${UBOOT_BINARY}
++    stat -L -cUUUBURNXXOEUZX7+A-XY5601QQWWZ%sEND ${UBOOT_BINARY} >> ${UBOOT_BINARY}
++}
++
++do_deploy:append:mx6() {
++    deploy_tag
++}
++
++do_deploy:append:mx7() {
++    deploy_tag
++}
++
+ PACKAGE_ARCH = "${MACHINE_ARCH}"
+ COMPATIBLE_MACHINE = "(mx6|mx7|mx8)"
+ 
+-UBOOT_NAME_mx6 = "u-boot-${MACHINE}.bin-${UBOOT_CONFIG}"
+-UBOOT_NAME_mx7 = "u-boot-${MACHINE}.bin-${UBOOT_CONFIG}"
+-UBOOT_NAME_mx8 = "u-boot-${MACHINE}.bin-${UBOOT_CONFIG}"
++UBOOT_NAME:mx6 = "u-boot-${MACHINE}.bin-${UBOOT_CONFIG}"
++UBOOT_NAME:mx7 = "u-boot-${MACHINE}.bin-${UBOOT_CONFIG}"
++UBOOT_NAME:mx8 = "u-boot-${MACHINE}.bin-${UBOOT_CONFIG}"
+-- 
+2.25.1
+

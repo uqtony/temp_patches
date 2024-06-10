@@ -1,0 +1,219 @@
+From 66c54c96bea7947c7cc9f45d63c31fe7eeef7654 Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Fri, 15 Apr 2022 15:07:52 +0800
+Subject: [PATCH 07/40] fix configs
+
+---
+ build_bds0800.sh                              |  4 +-
+ qbic-setup-release.sh                         |  2 +-
+ qbic/meta-qbic/conf/layer.conf                |  2 +-
+ .../recipes-images/qbic-image-full.bb         |  4 +-
+ .../recipes-override/u-boot-imx_2099.04.bb    | 63 -------------------
+ .../conf/machine/include/imx8mp-qbic.inc      | 40 +++++++++---
+ 6 files changed, 38 insertions(+), 77 deletions(-)
+ delete mode 100644 qbic/meta-qbic/recipes-override/u-boot-imx_2099.04.bb
+
+diff --git a/build_bds0800.sh b/build_bds0800.sh
+index 5f754e490..e62e152c1 100755
+--- a/build_bds0800.sh
++++ b/build_bds0800.sh
+@@ -29,7 +29,9 @@ echo "============== Setup environment  ============== .........................
+ 
+ cp ./qbic/meta-qbic/recipes-override/linux-imx_5.10.bb ./sources/meta-imx/meta-bsp/recipes-kernel/linux/linux-imx_5.10.bb
+ 
+-DISTRO=qbic_debian MACHINE=imx8mp-bdsxx00 source qbic-setup-release.sh -b bds0800
++# DISTRO=qbic_debian MACHINE=imx8mp-bdsxx00 source qbic-setup-release.sh -b bds0800
++
++DISTRO=qbic_xwayland MACHINE=imx8mp-bdsxx00 source qbic-setup-release.sh -b bds0800
+ 
+ 
+ 
+diff --git a/qbic-setup-release.sh b/qbic-setup-release.sh
+index 0aa39bbaa..49ffe9190 100755
+--- a/qbic-setup-release.sh
++++ b/qbic-setup-release.sh
+@@ -183,7 +183,7 @@ echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-gnome\"" >> $BUILD
+ echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-networking\"" >> $BUILD_DIR/conf/bblayers.conf
+ echo "BBLAYERS += \"\${BSPDIR}/sources/meta-openembedded/meta-filesystems\"" >> $BUILD_DIR/conf/bblayers.conf
+ 
+-echo "BBLAYERS += \"\${BSPDIR}/sources/meta-qt5\"" >> $BUILD_DIR/conf/bblayers.conf
++echo "BBLAYERS += \"\${BSPDIR}/sources/meta-qt6\"" >> $BUILD_DIR/conf/bblayers.conf
+ echo "BBLAYERS += \"\${BSPDIR}/sources/meta-python2\"" >> $BUILD_DIR/conf/bblayers.conf
+ echo "BBLAYERS += \"\${BSPDIR}/qbic/meta-qbic\"" >> $BUILD_DIR/conf/bblayers.conf
+ 
+diff --git a/qbic/meta-qbic/conf/layer.conf b/qbic/meta-qbic/conf/layer.conf
+index 296e1afdb..ae39a2bb4 100644
+--- a/qbic/meta-qbic/conf/layer.conf
++++ b/qbic/meta-qbic/conf/layer.conf
+@@ -8,7 +8,7 @@ BBFILES += "${LAYERDIR}/recipes-*/*.bb \
+ BBFILE_COLLECTIONS += "qbic"
+ BBFILE_PATTERN_qbic := "^${LAYERDIR}/"
+ BBFILE_PRIORITY_qbic = "7"
+-LAYERSERIES_COMPAT_qbic = " hardknott"
++LAYERSERIES_COMPAT_qbic = "honister"
+ 
+ 
+ 
+diff --git a/qbic/meta-qbic/recipes-images/qbic-image-full.bb b/qbic/meta-qbic/recipes-images/qbic-image-full.bb
+index 30a075b01..1064d5f28 100644
+--- a/qbic/meta-qbic/recipes-images/qbic-image-full.bb
++++ b/qbic/meta-qbic/recipes-images/qbic-image-full.bb
+@@ -2,7 +2,9 @@
+ # Copyright 2017-2020 NXP
+ # Released under the MIT license (see COPYING.MIT for the terms)
+ 
+-require ../sources/meta-imx/meta-sdk/dynamic-layers/qt5-layer/recipes-fsl/images/imx-image-full.bb
++require ../sources/meta-imx/meta-sdk/dynamic-layers/qt6-layer/recipes-fsl/images/imx-image-full.bb
++
++IMAGE_FEATURES += "dev-pkgs"
+ 
+ 
+ CONFLICT_DISTRO_FEATURES = "directfb"
+diff --git a/qbic/meta-qbic/recipes-override/u-boot-imx_2099.04.bb b/qbic/meta-qbic/recipes-override/u-boot-imx_2099.04.bb
+deleted file mode 100644
+index f61410508..000000000
+--- a/qbic/meta-qbic/recipes-override/u-boot-imx_2099.04.bb
++++ /dev/null
+@@ -1,63 +0,0 @@
+-# Copyright (C) 2013-2016 Freescale Semiconductor
+-# Copyright 2018 (C) O.S. Systems Software LTDA.
+-# Copyright 2017-2021 NXP
+-
+-require recipes-bsp/u-boot/u-boot.inc
+-require recipes-bsp/u-boot/u-boot-imx-common_2021.04.inc
+-
+-PROVIDES += "u-boot"
+-
+-#UBOOT_SRC ?= "git://source.codeaurora.org/external/imx/uboot-imx.git;protocol=https"
+-
+-UBOOT_SRC = "file://../qbic/sources/u-boot-imx/"
+-
+-SRCBRANCH = "lf_v2021.04"
+-SRC_URI = "${UBOOT_SRC};branch=${SRCBRANCH}"
+-SRCREV = "263b27e076a0f6e5dcc80227a235f0af73718342"
+-
+-LOCALVERSION = "-${SRCBRANCH}"
+-
+-do_deploy_append_mx8m() {
+-    # Deploy u-boot-nodtb.bin and fsl-imx8m*-XX.dtb for mkimage to generate boot binary
+-    if [ -n "${UBOOT_CONFIG}" ]
+-    then
+-        for config in ${UBOOT_MACHINE}; do
+-            i=$(expr $i + 1);
+-            for type in ${UBOOT_CONFIG}; do
+-                j=$(expr $j + 1);
+-                if [ $j -eq $i ]
+-                then
+-                    install -d ${DEPLOYDIR}/${BOOT_TOOLS}
+-                    install -m 0777 ${B}/${config}/arch/arm/dts/${UBOOT_DTB_NAME}  ${DEPLOYDIR}/${BOOT_TOOLS}
+-                    install -m 0777 ${B}/${config}/u-boot-nodtb.bin  ${DEPLOYDIR}/${BOOT_TOOLS}/u-boot-nodtb.bin-${MACHINE}-${type}
+-                fi
+-            done
+-            unset  j
+-        done
+-        unset  i
+-    fi
+-}
+-
+-UBOOT_TAGGED_BINARY ?= "u-boot-tagged.${UBOOT_SUFFIX}"
+-
+-deploy_tag() {
+-    # Append a tag to the bootloader image used in the SD card image
+-    cp ${UBOOT_BINARY} ${UBOOT_TAGGED_BINARY}
+-    ln -sf ${UBOOT_TAGGED_BINARY} ${UBOOT_BINARY}
+-    stat -L -cUUUBURNXXOEUZX7+A-XY5601QQWWZ%sEND ${UBOOT_BINARY} >> ${UBOOT_BINARY}
+-}
+-
+-do_deploy_append_mx6() {
+-    deploy_tag
+-}
+-
+-do_deploy_append_mx7() {
+-    deploy_tag
+-}
+-
+-PACKAGE_ARCH = "${MACHINE_ARCH}"
+-COMPATIBLE_MACHINE = "(mx6|mx7|mx8)"
+-
+-UBOOT_NAME_mx6 = "u-boot-${MACHINE}.bin-${UBOOT_CONFIG}"
+-UBOOT_NAME_mx7 = "u-boot-${MACHINE}.bin-${UBOOT_CONFIG}"
+-UBOOT_NAME_mx8 = "u-boot-${MACHINE}.bin-${UBOOT_CONFIG}"
+diff --git a/sources/meta-freescale/conf/machine/include/imx8mp-qbic.inc b/sources/meta-freescale/conf/machine/include/imx8mp-qbic.inc
+index 1a0d46806..7635d08ce 100644
+--- a/sources/meta-freescale/conf/machine/include/imx8mp-qbic.inc
++++ b/sources/meta-freescale/conf/machine/include/imx8mp-qbic.inc
+@@ -1,14 +1,19 @@
+ MACHINEOVERRIDES =. "imx-boot-container:mx8:mx8m:mx8mp:"
+ 
+ require conf/machine/include/imx-base.inc
+-require conf/machine/include/tune-cortexa53.inc
++require conf/machine/include/arm/armv8a/tune-cortexa53.inc
++
++# Mainline BSP defaults to "generic" cortexa53 configuration,
++# adjust it here to include crypto extension which enables
++# inline NEON and FPU code generation
++DEFAULTTUNE:use-mainline-bsp = "cortexa53-crypto"
+ 
+ MACHINE_FEATURES += "pci wifi bluetooth"
+ 
+ # NXP BSP can consume proprietary jailhouse and Marvell drivers
+ # OP-TEE is also applicable to NXP BSP, mainline BSP seems not to have
+ # a full support for it yet.
+-MACHINE_FEATURES_append_use-nxp-bsp = " optee jailhouse mrvl8997"
++MACHINE_FEATURES:append:use-nxp-bsp = " optee jailhouse mrvl8997"
+ 
+ # Mainline kernel contains only one DTB file for
+ # imx8mpevk machine
+@@ -16,14 +21,10 @@ KERNEL_DEVICETREE = " \
+     freescale/${KERNEL_DEVICETREE_BASENAME}.dtb \
+ "
+ 
+-#UBOOT_DTB_NAME = "${KERNEL_DEVICETREE_BASENAME}.dtb"
+-
+-UBOOT_DTB_NAME = "imx8mp-evk.dtb"
+-
++UBOOT_DTB_NAME = "${KERNEL_DEVICETREE_BASENAME}.dtb"
+ 
+-
+-IMX_DEFAULT_BOOTLOADER_use-nxp-bsp = "u-boot-imx"
+-IMX_DEFAULT_BOOTLOADER_use-mainline-bsp = "u-boot-fslc"
++IMX_DEFAULT_BOOTLOADER:use-nxp-bsp = "u-boot-imx"
++IMX_DEFAULT_BOOTLOADER:use-mainline-bsp = "u-boot-fslc"
+ 
+ UBOOT_SUFFIX = "bin"
+ 
+@@ -48,6 +49,25 @@ IMX_BOOT_SOC_TARGET = "iMX8MP"
+ 
+ SERIAL_CONSOLES = "115200;ttymxc1"
+ 
++# Add support for Syslinux to mainline BSP.
++# U-Boot has the Distro Boot mode enabled by default, which
++# require that either Syslinux to be enabled, or a boot script
++# to be used to define the boot process.
++# We opt-in for Syslinux, since it is designated as a preferred
++# distro boot mode according to the U-Boot documentation.
++UBOOT_EXTLINUX:use-mainline-bsp = "1"
++UBOOT_EXTLINUX_LABELS:use-mainline-bsp = "default"
++UBOOT_EXTLINUX_DEFAULT_LABEL:use-mainline-bsp = "i.MX8M Plus EVK"
++
++UBOOT_EXTLINUX_MENU_DESCRIPTION:default:use-mainline-bsp = "i.MX8M Plus EVK"
++UBOOT_EXTLINUX_FDT:default:use-mainline-bsp     = "../${KERNEL_DEVICETREE_BASENAME}.dtb"
++UBOOT_EXTLINUX_CONSOLE:default:use-mainline-bsp = "console=${console}"
++UBOOT_EXTLINUX_ROOT:default:use-mainline-bsp    = "root=/dev/mmcblk1p2"
++
++# Add extlinux.conf to the lis of files, which are deployed onto the
++# boot partition
++IMAGE_BOOT_FILES:append:use-mainline-bsp = " extlinux.conf;extlinux/extlinux.conf"
++
+ LOADADDR = ""
+ UBOOT_SUFFIX = "bin"
+ UBOOT_MAKE_TARGET = "all"
+@@ -57,4 +77,4 @@ OPTEE_BIN_EXT = "8mp"
+ TEE_LOAD_ADDR = "0x56000000"
+ 
+ # Add additional firmware
+-MACHINE_FIRMWARE_append = " linux-firmware-ath10k"
++MACHINE_FIRMWARE:append = " linux-firmware-ath10k"
+-- 
+2.25.1
+

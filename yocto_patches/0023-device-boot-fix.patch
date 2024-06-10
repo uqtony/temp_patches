@@ -1,0 +1,320 @@
+From 3ba095a04a73f7c7c7fae89e2ed94f0040a503c2 Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Fri, 22 Apr 2022 13:51:25 +0800
+Subject: [PATCH 23/40] device boot fix
+
+---
+ .../recipes-override/u-boot-imx_2021.04.bb    |  11 +-
+ .../arch/arm/dts/imx8mp-bds0800.dts           |   2 +-
+ .../2021.04-r0/arch/arm/dts/imx8mp-evk.dts    | 150 +-----------------
+ .../sources/u-boot-imx/2021.04-r0/cmd/booti.c |   5 +-
+ .../configs/imx8mp_bds0800_defconfig          |   2 +-
+ .../conf/machine/imx8mp-bdsxx00.conf          |   1 +
+ .../recipes-bsp/u-boot/u-boot-imx_2021.04.bb  |   2 +-
+ 7 files changed, 19 insertions(+), 154 deletions(-)
+
+diff --git a/qbic/meta-qbic/recipes-override/u-boot-imx_2021.04.bb b/qbic/meta-qbic/recipes-override/u-boot-imx_2021.04.bb
+index a0851a63f..f7898d1fd 100644
+--- a/qbic/meta-qbic/recipes-override/u-boot-imx_2021.04.bb
++++ b/qbic/meta-qbic/recipes-override/u-boot-imx_2021.04.bb
+@@ -38,10 +38,19 @@ do_deploy:append:mx8m() {
+ do_copy_customize_uboot () {
+ 
+     cp -Rf ../qbic/sources/u-boot-imx/2021.04-r0/* ./tmp/work/imx8mp_bdsxx00-poky-linux/u-boot-imx/2021.04-r0/git/
++    cp -Rf ../qbic/sources/u-boot-imx/2021.04-r0/* ./tmp/work/x86_64-linux/u-boot-imx-tools-native/2021.04-r0/git/
+ 
+ }
+ 
+-addtask copy_customize_uboot before do_compile after do_configure
++addtask do_copy_customize_uboot before do_compile after do_configure
++
++do_copy_customize_config () {
++
++    cp -f ../qbic/sources/u-boot-imx/2021.04-r0/configs/imx8mp_bds0800_defconfig ./tmp/work/imx8mp_bdsxx00-poky-linux/u-boot-imx/2021.04-r0/git/configs/
++
++}
++
++addtask do_copy_customize_config before do_configure after do_patch
+ 
+ UBOOT_TAGGED_BINARY ?= "u-boot-tagged.${UBOOT_SUFFIX}"
+ 
+diff --git a/qbic/sources/u-boot-imx/2021.04-r0/arch/arm/dts/imx8mp-bds0800.dts b/qbic/sources/u-boot-imx/2021.04-r0/arch/arm/dts/imx8mp-bds0800.dts
+index 51391dd2a..0b3927eb5 100644
+--- a/qbic/sources/u-boot-imx/2021.04-r0/arch/arm/dts/imx8mp-bds0800.dts
++++ b/qbic/sources/u-boot-imx/2021.04-r0/arch/arm/dts/imx8mp-bds0800.dts
+@@ -9,7 +9,7 @@
+ #include "imx8mp.dtsi"
+ 
+ / {
+-	model = "QBIC bds0800 LPDDR4 board";
++	model = "QBIC uboot bds0800 LPDDR4 board";
+ 	compatible = "fsl,imx8mp-evk", "fsl,imx8mp";
+ 
+ 	chosen {
+diff --git a/qbic/sources/u-boot-imx/2021.04-r0/arch/arm/dts/imx8mp-evk.dts b/qbic/sources/u-boot-imx/2021.04-r0/arch/arm/dts/imx8mp-evk.dts
+index fa923d580..304d026c0 100644
+--- a/qbic/sources/u-boot-imx/2021.04-r0/arch/arm/dts/imx8mp-evk.dts
++++ b/qbic/sources/u-boot-imx/2021.04-r0/arch/arm/dts/imx8mp-evk.dts
+@@ -17,17 +17,6 @@
+ 		stdout-path = &uart2;
+ 	};
+ 
+-	gpio-leds {
+-		compatible = "gpio-leds";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_gpio_led>;
+-
+-		status {
+-			label = "yellow:status";
+-			gpios = <&gpio3 16 GPIO_ACTIVE_HIGH>;
+-			default-state = "on";
+-		};
+-	};
+ 
+ 	memory@40000000 {
+ 		device_type = "memory";
+@@ -70,45 +59,7 @@
+ 		off-on-delay-us = <12000>;
+ 	};
+ 
+-	dsi_host: dsi-host {
+-		compatible = "samsung,sec-mipi-dsi";
+-		status = "okay";
+-	};
+-
+-	rm67199_panel {
+-		compatible = "raydium,rm67199";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_mipi_dsi_en>;
+-		reset-gpio = <&gpio1 8 GPIO_ACTIVE_LOW>;
+-		dsi-lanes = <4>;
+-		video-mode = <2>;	/* 0: burst mode
+-					 * 1: non-burst mode with sync event
+-					 * 2: non-burst mode with sync pulse
+-					 */
+-		panel-width-mm = <68>;
+-		panel-height-mm = <121>;
+-		status = "okay";
+-
+-		port {
+-			rm67191_from_dsim: endpoint {
+-				remote-endpoint = <&dsim_to_rm67191>;
+-			};
+-		};
+-	};
+-
+-	cbtl04gp {
+-		compatible = "nxp,cbtl04gp";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_typec_mux>;
+-		switch-gpios = <&gpio4 20 GPIO_ACTIVE_LOW>;
+-		orientation-switch;
+ 
+-		port {
+-			usb3_data_ss: endpoint {
+-				remote-endpoint = <&typec_con_ss>;
+-			};
+-		};
+-	};
+ };
+ 
+ &eqos {
+@@ -145,25 +96,6 @@
+ 	status = "disabled";/* can2 pin conflict with pdm */
+ };
+ 
+-&fec {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_fec>;
+-	phy-mode = "rgmii-id";
+-	phy-handle = <&ethphy1>;
+-	fsl,magic-packet;
+-	status = "okay";
+-
+-	mdio {
+-		#address-cells = <1>;
+-		#size-cells = <0>;
+-
+-		ethphy1: ethernet-phy@1 {
+-			compatible = "ethernet-phy-ieee802.3-c22";
+-			reg = <1>;
+-			eee-broken-1000t;
+-		};
+-	};
+-};
+ 
+ &flexspi {
+ 	pinctrl-names = "default";
+@@ -306,60 +238,6 @@
+ 	scl-gpios = <&gpio5 16 GPIO_ACTIVE_HIGH>;
+ 	sda-gpios = <&gpio5 17 GPIO_ACTIVE_HIGH>;
+ 	status = "okay";
+-
+-	adv_bridge: adv7535@3d {
+-		compatible = "adi,adv7533";
+-		reg = <0x3d>;
+-		adi,addr-cec = <0x3c>;
+-		adi,dsi-lanes = <4>;
+-		status = "okay";
+-
+-		port {
+-			adv7535_from_dsim: endpoint {
+-				remote-endpoint = <&dsim_to_adv7535>;
+-			};
+-		};
+-	};
+-
+-	ptn5110: tcpc@50 {
+-		compatible = "nxp,ptn5110";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_typec>;
+-		reg = <0x50>;
+-		interrupt-parent = <&gpio4>;
+-		interrupts = <19 8>;
+-
+-		port {
+-			typec_dr_sw: endpoint {
+-				remote-endpoint = <&usb3_drd_sw>;
+-			};
+-		};
+-
+-		usb_con: connector {
+-			compatible = "usb-c-connector";
+-			label = "USB-C";
+-			power-role = "dual";
+-			data-role = "dual";
+-			try-power-role = "sink";
+-			source-pdos = <PDO_FIXED(5000, 3000, PDO_FIXED_USB_COMM)>;
+-			sink-pdos = <PDO_FIXED(5000, 3000, PDO_FIXED_USB_COMM)
+-				     PDO_VAR(5000, 20000, 3000)>;
+-			op-sink-microwatt = <15000000>;
+-			self-powered;
+-
+-			ports {
+-				#address-cells = <1>;
+-				#size-cells = <0>;
+-
+-				port@1 {
+-					reg = <1>;
+-					typec_con_ss: endpoint {
+-						remote-endpoint = <&usb3_data_ss>;
+-					};
+-				};
+-			};
+-		};
+-	};
+ };
+ 
+ &i2c3 {
+@@ -371,33 +249,12 @@
+ 	sda-gpios = <&gpio5 19 GPIO_ACTIVE_HIGH>;
+ 	status = "okay";
+ 
+-	pca6416: gpio@20 {
+-		compatible = "ti,tca6416";
+-		reg = <0x20>;
+-		gpio-controller;
+-		#gpio-cells = <2>;
+-	};
+ };
+ 
+ &lcdif1 {
+ 	status = "okay";
+ };
+ 
+-&mipi_dsi {
+-	status = "okay";
+-
+-	port@1 {
+-		dsim_to_adv7535: endpoint {
+-			remote-endpoint = <&adv7535_from_dsim>;
+-		};
+-	};
+-
+-	port@2 {
+-		dsim_to_rm67191: endpoint {
+-			remote-endpoint = <&rm67191_from_dsim>;
+-		};
+-	};
+-};
+ 
+ &snvs_pwrkey {
+ 	status = "okay";
+@@ -411,7 +268,7 @@
+ };
+ 
+ &usb3_phy0 {
+-	vbus-power-supply = <&ptn5110>;
++
+ 	fsl,phy-tx-vref-tune = <0xe>;
+ 	fsl,phy-tx-preemp-amp-tune = <3>;
+ 	fsl,phy-tx-vboost-level = <5>;
+@@ -434,11 +291,6 @@
+ 	role-switch-default-mode = "none";
+ 	status = "okay";
+ 
+-	port {
+-		usb3_drd_sw: endpoint {
+-			remote-endpoint = <&typec_dr_sw>;
+-		};
+-	};
+ };
+ 
+ &usb3_phy1 {
+diff --git a/qbic/sources/u-boot-imx/2021.04-r0/cmd/booti.c b/qbic/sources/u-boot-imx/2021.04-r0/cmd/booti.c
+index d7b5fb641..2b9e6a667 100644
+--- a/qbic/sources/u-boot-imx/2021.04-r0/cmd/booti.c
++++ b/qbic/sources/u-boot-imx/2021.04-r0/cmd/booti.c
+@@ -125,7 +125,10 @@ int do_booti(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+ 	 * We are doing the BOOTM_STATE_LOADOS state ourselves, so must
+ 	 * disable interrupts ourselves
+ 	 */
+-	bootm_disable_interrupts();
++    printf("do_booti...............bootm_disable_interrupts...................................................\n");
++    
++	//bootm_disable_interrupts();
++    printf("do_booti...............skip....bootm_disable_interrupts........aaron...............\n");
+ 
+ 	images.os.os = IH_OS_LINUX;
+ #ifdef CONFIG_RISCV_SMODE
+diff --git a/qbic/sources/u-boot-imx/2021.04-r0/configs/imx8mp_bds0800_defconfig b/qbic/sources/u-boot-imx/2021.04-r0/configs/imx8mp_bds0800_defconfig
+index bd7e82f01..21836967a 100644
+--- a/qbic/sources/u-boot-imx/2021.04-r0/configs/imx8mp_bds0800_defconfig
++++ b/qbic/sources/u-boot-imx/2021.04-r0/configs/imx8mp_bds0800_defconfig
+@@ -22,7 +22,7 @@ CONFIG_SPL_SERIAL_SUPPORT=y
+ CONFIG_SPL_DRIVERS_MISC_SUPPORT=y
+ CONFIG_SPL=y
+ CONFIG_SPL_IMX_ROMAPI_LOADADDR=0x48000000
+-CONFIG_DEFAULT_DEVICE_TREE="imx8mp-bds0800"
++CONFIG_DEFAULT_DEVICE_TREE="imx8mp-evk"
+ CONFIG_DISTRO_DEFAULTS=y
+ CONFIG_FIT=y
+ CONFIG_FIT_EXTERNAL_OFFSET=0x3000
+diff --git a/sources/meta-freescale/conf/machine/imx8mp-bdsxx00.conf b/sources/meta-freescale/conf/machine/imx8mp-bdsxx00.conf
+index f6199536d..cab4264b0 100644
+--- a/sources/meta-freescale/conf/machine/imx8mp-bdsxx00.conf
++++ b/sources/meta-freescale/conf/machine/imx8mp-bdsxx00.conf
+@@ -13,6 +13,7 @@ KERNEL_DEVICETREE_BASENAME = "imx8mp-bds0800"
+ # derivates. Include them here for NXP BSP only
+ KERNEL_DEVICETREE:append:use-nxp-bsp = " \
+ 	freescale/imx8mp-bds0800.dtb \
++	freescale/imx8mp-evk.dtb \
+ "
+ 
+ 
+diff --git a/sources/meta-imx/meta-bsp/recipes-bsp/u-boot/u-boot-imx_2021.04.bb b/sources/meta-imx/meta-bsp/recipes-bsp/u-boot/u-boot-imx_2021.04.bb
+index 66a8f4b4f..f7898d1fd 100644
+--- a/sources/meta-imx/meta-bsp/recipes-bsp/u-boot/u-boot-imx_2021.04.bb
++++ b/sources/meta-imx/meta-bsp/recipes-bsp/u-boot/u-boot-imx_2021.04.bb
+@@ -50,7 +50,7 @@ do_copy_customize_config () {
+ 
+ }
+ 
+-addtask do_copy_customize_config before do_configure
++addtask do_copy_customize_config before do_configure after do_patch
+ 
+ UBOOT_TAGGED_BINARY ?= "u-boot-tagged.${UBOOT_SUFFIX}"
+ 
+-- 
+2.25.1
+

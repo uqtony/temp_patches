@@ -1,0 +1,38 @@
+From abfe3435b396c4ebee68d888fd650af8af8c0e2d Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Mon, 18 Apr 2022 15:33:32 +0800
+Subject: [PATCH 17/40] change usb to 2.0 in uboot
+
+---
+ .../2021.04-r0/board/freescale/imx8mp_evk/imx8mp_evk.c      | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/qbic/sources/u-boot-imx/2021.04-r0/board/freescale/imx8mp_evk/imx8mp_evk.c b/qbic/sources/u-boot-imx/2021.04-r0/board/freescale/imx8mp_evk/imx8mp_evk.c
+index f2826d398..a2bbfcf11 100644
+--- a/qbic/sources/u-boot-imx/2021.04-r0/board/freescale/imx8mp_evk/imx8mp_evk.c
++++ b/qbic/sources/u-boot-imx/2021.04-r0/board/freescale/imx8mp_evk/imx8mp_evk.c
+@@ -339,10 +339,10 @@ int board_usb_init(int index, enum usb_init_type init)
+ {
+ 	int ret = 0;
+ 	imx8m_usb_power(index, true);
+-
++printf("%s: wiser\n", __func__); //aaron
+ 	if (index == 0 && init == USB_INIT_DEVICE) {
+ #ifdef CONFIG_USB_TCPC
+-		ret = tcpc_setup_ufp_mode(&port1);
++		//ret = tcpc_setup_ufp_mode(&port1);
+ 		if (ret)
+ 			return ret;
+ #endif
+@@ -350,7 +350,7 @@ int board_usb_init(int index, enum usb_init_type init)
+ 		return dwc3_uboot_init(&dwc3_device_data);
+ 	} else if (index == 0 && init == USB_INIT_HOST) {
+ #ifdef CONFIG_USB_TCPC
+-		ret = tcpc_setup_dfp_mode(&port1);
++	//	ret = tcpc_setup_dfp_mode(&port1);
+ #endif
+ 		return ret;
+ 	}
+-- 
+2.25.1
+

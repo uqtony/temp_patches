@@ -1,0 +1,76 @@
+From 5e68b1b3fee61a8e6aba1695550fdfb22a73af2f Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Wed, 11 May 2022 08:46:36 +0800
+Subject: [PATCH 36/40] update build script
+
+---
+ build_bds0800.sh                              | 19 +++++++++++++------
+ .../recipes-images/qbic-image-core.bb         |  2 ++
+ 2 files changed, 15 insertions(+), 6 deletions(-)
+
+diff --git a/build_bds0800.sh b/build_bds0800.sh
+index 9ea72c86a..8929b9db3 100755
+--- a/build_bds0800.sh
++++ b/build_bds0800.sh
+@@ -45,11 +45,14 @@ echo
+ rm bitbake.lock
+ 
+ #bitbake imx-image-full
+-# bitbake imx-boot
++# bitbake imx-boot -ccleansstate
+ # bitbake linux-imx -ccleansstate
+ # bitbake u-boot-imx -ccleansstate
+ # bitbake qbic-image-full -ccleansstate
+ 
++
++# bitbake qbic-image-core
++
+ bitbake qbic-image-full
+ 
+ clean_up
+@@ -58,7 +61,7 @@ echo
+ echo "============== Copying files  ============== .................................................................................................."
+ echo 
+ 
+-ls ./tmp/deploy/images/imx8mp-qbic/
++ls ./tmp/deploy/images/imx8mp-bdsxx00/
+ # rm /mnt/share/\@\@nxp/imx8mp_linux_aaron/*.bin
+ # rm /mnt/share/\@\@nxp/imx8mp_linux_aaron/*.dtb
+ # 
+@@ -66,12 +69,16 @@ ls ./tmp/deploy/images/imx8mp-qbic/
+ 
+ #cp -Rf ./tmp/deploy/images/imx8mp-qbic/* /mnt/share/\@\@nxp/imx8mp_linux_aaron/
+ 
+-rm /mnt/share/bds0800/*.wic
+-7za e ./tmp/deploy/images/imx8mp-qbic/qbic-image-full-imx8mp-qbic.wic.bz2 -o/mnt/share/bds0800/
++rm /mnt/share/bds0800/qbic-image-full-imx8mp-bdsxx00.wic
++
++7za e ./tmp/deploy/images/imx8mp-bdsxx00/qbic-image-full-imx8mp-bdsxx00.wic.bz2 -o/mnt/share/bds0800/
++# 7za e ./tmp/deploy/images/imx8mp-bdsxx00/imx-image-core-imx8mp-bdsxx00.wic.bz2 -o/mnt/share/bds0800/
++
++cp ./tmp/deploy/images/imx8mp-bdsxx00/imx-boot-imx8mp-bdsxx00-sd.bin-flash_evk /mnt/share/bds0800/
+ 
+ 
+-cp ./tmp/deploy/images/imx8mp-qbic/*.bin* /mnt/share/bds0800/
+-cp ./tmp/deploy/images/imx8mp-qbic/*.dtb /mnt/share/bds0800/
++# cp ./tmp/deploy/images/imx8mp-bdsxx00/*.bin* /mnt/share/bds0800/
++# cp ./tmp/deploy/images/imx8mp-bdsxx00/*.dtb /mnt/share/bds0800/
+ 
+ #cp ./tmp/deploy/images/imx8mp-qbic/*.wic.bz2 /mnt/share/\@\@nxp/imx8mp_linux_aaron/
+ #cp /mnt/share/\@\@nxp/imx8mp_linux_aaron/*.tgz /mnt/share/\@\@nxp/imx8mp_linux_aaron/
+diff --git a/qbic/meta-qbic/recipes-images/qbic-image-core.bb b/qbic/meta-qbic/recipes-images/qbic-image-core.bb
+index ac6e72965..4f31b75ca 100644
+--- a/qbic/meta-qbic/recipes-images/qbic-image-core.bb
++++ b/qbic/meta-qbic/recipes-images/qbic-image-core.bb
+@@ -12,6 +12,8 @@ IMAGE_FEATURES += " \
+ 
+ IMAGE_INSTALL += " \
+     libgpiod \
++    initscripts \
++    ppp \
+ "
+ 
+ 
+-- 
+2.25.1
+

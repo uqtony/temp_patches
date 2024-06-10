@@ -1,0 +1,232 @@
+From 9d3466cc5dca5316db8208dc2e56e7dd867593f9 Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Wed, 11 May 2022 08:43:31 +0800
+Subject: [PATCH 34/40] modify panel settings
+
+---
+ .../boot/dts/freescale/imx8mp-bds0800.dts     | 114 ++++--------------
+ .../drivers/gpu/drm/panel/panel-simple.c      |  16 +--
+ 2 files changed, 33 insertions(+), 97 deletions(-)
+
+diff --git a/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts b/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts
+index c188e98bf..29c33bdcb 100644
+--- a/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts
++++ b/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts
+@@ -22,27 +22,6 @@ memory@40000000 {
+ 		      <0x1 0x00000000 0 0xc0000000>;
+ 	};
+ 
+-	reg_can1_stby: regulator-can1-stby {
+-		compatible = "regulator-fixed";
+-		regulator-name = "can1-stby";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_flexcan1_reg>;
+-		regulator-min-microvolt = <3300000>;
+-		regulator-max-microvolt = <3300000>;
+-		gpio = <&gpio5 5 GPIO_ACTIVE_HIGH>;
+-		enable-active-high;
+-	};
+-
+-	reg_can2_stby: regulator-can2-stby {
+-		compatible = "regulator-fixed";
+-		regulator-name = "can2-stby";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_flexcan2_reg>;
+-		regulator-min-microvolt = <3300000>;
+-		regulator-max-microvolt = <3300000>;
+-		gpio = <&gpio4 27 GPIO_ACTIVE_HIGH>;
+-		enable-active-high;
+-	};
+ 
+ 	reg_audio_pwr: regulator-audio-pwr {
+ 		compatible = "regulator-fixed";
+@@ -138,12 +117,7 @@ flash0: mt25qu256aba@0 {
+ 	};
+ };
+ 
+-&flexcan1 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_flexcan1>;
+-	xceiver-supply = <&reg_can1_stby>;
+-	status = "okay";
+-};
++
+ 
+ &A53_0 {
+ 	cpu-supply = <&buck2>;
+@@ -377,6 +351,20 @@ &i2c2 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_i2c2>;
+ 	status = "okay";
++    
++    pcf85063: rtc@51 {
++	compatible = "nxp,pcf85063a";
++	reg = <0x51>;
++	quartz-load-femtofarads = <12500>;
++
++		clock {
++			compatible = "fixed-clock";
++			#clock-cells = <0>;
++			clock-frequency = <32768>;
++		};
++	};
++
++
+ };
+ 
+ &i2c3 {
+@@ -451,9 +439,9 @@ &micfil {
+ &pcie{
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_pcie>;
+-	disable-gpio = <&gpio2 6 GPIO_ACTIVE_LOW>;
+-	reset-gpio = <&gpio2 7 GPIO_ACTIVE_LOW>;
+-	ext_osc = <1>;
++	disable-gpio = <&gpio3 24 GPIO_ACTIVE_LOW>;
++	reset-gpio = <&gpio4 14 GPIO_ACTIVE_LOW>;
++	ext_osc = <0>;
+ 	clocks = <&clk IMX8MP_CLK_HSIO_ROOT>,
+ 		 <&clk IMX8MP_CLK_PCIE_AUX>,
+ 		 <&clk IMX8MP_CLK_HSIO_AXI>,
+@@ -478,7 +466,7 @@ wifi_wake_host {
+ &pcie_ep{
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_pcie>;
+-	ext_osc = <1>;
++	ext_osc = <0>;
+ 	clocks = <&clk IMX8MP_CLK_HSIO_ROOT>,
+ 		 <&clk IMX8MP_CLK_PCIE_AUX>,
+ 		 <&clk IMX8MP_CLK_HSIO_AXI>,
+@@ -493,7 +481,7 @@ &pcie_ep{
+ };
+ 
+ &pcie_phy{
+-	ext_osc = <1>;
++	ext_osc = <0>;
+ 	status = "okay";
+ };
+ 
+@@ -671,52 +659,6 @@ MX8MP_IOMUXC_SAI2_RXC__GPIO4_IO22				0x19
+ 		>;
+ 	};
+ 
+-	pinctrl_fec: fecgrp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI1_RXD2__ENET1_MDC		0x3
+-			MX8MP_IOMUXC_SAI1_RXD3__ENET1_MDIO		0x3
+-			MX8MP_IOMUXC_SAI1_RXD4__ENET1_RGMII_RD0		0x91
+-			MX8MP_IOMUXC_SAI1_RXD5__ENET1_RGMII_RD1		0x91
+-			MX8MP_IOMUXC_SAI1_RXD6__ENET1_RGMII_RD2		0x91
+-			MX8MP_IOMUXC_SAI1_RXD7__ENET1_RGMII_RD3		0x91
+-			MX8MP_IOMUXC_SAI1_TXC__ENET1_RGMII_RXC		0x91
+-			MX8MP_IOMUXC_SAI1_TXFS__ENET1_RGMII_RX_CTL	0x91
+-			MX8MP_IOMUXC_SAI1_TXD0__ENET1_RGMII_TD0		0x1f
+-			MX8MP_IOMUXC_SAI1_TXD1__ENET1_RGMII_TD1		0x1f
+-			MX8MP_IOMUXC_SAI1_TXD2__ENET1_RGMII_TD2		0x1f
+-			MX8MP_IOMUXC_SAI1_TXD3__ENET1_RGMII_TD3		0x1f
+-			MX8MP_IOMUXC_SAI1_TXD4__ENET1_RGMII_TX_CTL	0x1f
+-			MX8MP_IOMUXC_SAI1_TXD5__ENET1_RGMII_TXC		0x1f
+-			MX8MP_IOMUXC_SAI1_RXD0__GPIO4_IO02		0x19
+-		>;
+-	};
+-
+-	pinctrl_flexcan1: flexcan1grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SPDIF_RX__CAN1_RX          0x154
+-			MX8MP_IOMUXC_SPDIF_TX__CAN1_TX          0x154
+-		>;
+-	};
+-
+-	pinctrl_flexcan2: flexcan2grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI5_MCLK__CAN2_RX         0x154
+-			MX8MP_IOMUXC_SAI5_RXD3__CAN2_TX         0x154
+-		>;
+-	};
+-
+-	pinctrl_flexcan1_reg: flexcan1reggrp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SPDIF_EXT_CLK__GPIO5_IO05  0x154   /* CAN1_STBY */
+-		>;
+-	};
+-
+-	pinctrl_flexcan2_reg: flexcan2reggrp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI2_MCLK__GPIO4_IO27      0x154   /* CAN2_STBY */
+-		>;
+-	};
+-
+ 	pinctrl_flexspi0: flexspi0grp {
+ 		fsl,pins = <
+ 			MX8MP_IOMUXC_NAND_ALE__FLEXSPI_A_SCLK           0x1c2
+@@ -739,7 +681,7 @@ pinctrl_lvds_panel: gpiopanelgrp {
+ 			MX8MP_IOMUXC_GPIO1_IO06__GPIO1_IO06	0x16
+ 			MX8MP_IOMUXC_GPIO1_IO07__GPIO1_IO07	0x16
+ 			MX8MP_IOMUXC_GPIO1_IO11__GPIO1_IO11	0x16
+-			MX8MP_IOMUXC_SAI5_RXD3__GPIO3_IO24	0x16
++// 			MX8MP_IOMUXC_SAI5_RXD3__GPIO3_IO24	0x16
+ 		>;
+ 	};
+ 
+@@ -764,18 +706,12 @@ MX8MP_IOMUXC_I2C3_SDA__I2C3_SDA		0x400001c2
+ 		>;
+ 	};
+ 
+-	pinctrl_mipi_dsi_en: mipi_dsi_en {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_GPIO1_IO08__GPIO1_IO08	0x16
+-		>;
+-	};
+-
+ 	pinctrl_pcie: pciegrp {
+ 		fsl,pins = <
+-			MX8MP_IOMUXC_I2C4_SCL__PCIE_CLKREQ_B		0x61 /* open drain, pull up */
+-			MX8MP_IOMUXC_SD1_DATA4__GPIO2_IO06		0x41
+-			MX8MP_IOMUXC_SD1_DATA5__GPIO2_IO07		0x41
+-			MX8MP_IOMUXC_I2C4_SDA__GPIO5_IO21		0x1c4
++			MX8MP_IOMUXC_UART4_RXD__PCIE_CLKREQ_B		0x61 /* open drain, pull up */
++			MX8MP_IOMUXC_SAI5_RXD3__GPIO3_IO24		0x41   //disable 
++			MX8MP_IOMUXC_SAI1_TXD2__GPIO4_IO14		0x41   //reset
++			MX8MP_IOMUXC_SAI1_TXD0__GPIO4_IO12		0x1c4
+ 		>;
+ 	};
+ 
+diff --git a/qbic/sources/linux-imx-5.15.5/drivers/gpu/drm/panel/panel-simple.c b/qbic/sources/linux-imx-5.15.5/drivers/gpu/drm/panel/panel-simple.c
+index 341c5903c..841efcfb2 100644
+--- a/qbic/sources/linux-imx-5.15.5/drivers/gpu/drm/panel/panel-simple.c
++++ b/qbic/sources/linux-imx-5.15.5/drivers/gpu/drm/panel/panel-simple.c
+@@ -2897,15 +2897,15 @@ static const struct panel_desc jdi_tx26d202vm0bwa = {
+ ///////////// aaron ///////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+ static const struct display_timing suniverse_st080hdldn00_timing = {
+-	.pixelclock = { 58520000, 63720000, 76280000 },
++	.pixelclock = { 60520000, 63720000, 72280000 },
+ 	.hactive = { 1280, 1280, 1280 },
+-	.hfront_porch = { 200, 200, 200 },
+-	.hback_porch = { 100, 100, 100 },
+-	.hsync_len = { 100, 100, 100 },
++	.hfront_porch = { 44, 44, 44 },
++	.hback_porch = { 16, 16, 16 },
++	.hsync_len = { 2, 2, 2 },
+ 	.vactive = { 720, 720, 720},
+-	.vfront_porch = { 10, 10, 10 },
+-	.vback_porch = { 10, 10, 10 },
+-	.vsync_len = { 5, 5, 5 },
++	.vfront_porch = { 67, 67, 67 },
++	.vback_porch = { 5, 5, 5 },
++	.vsync_len = { 2, 2, 2 },
+ 	.flags = DISPLAY_FLAGS_DE_HIGH,
+ };
+ 
+@@ -2929,7 +2929,7 @@ static const struct panel_desc suniverse_st080hdldn00 = {
+ 		.unprepare = 100,
+ 		.disable = 100,
+ 	},
+-	.bus_format = MEDIA_BUS_FMT_RGB666_1X7X3_SPWG,  //MEDIA_BUS_FMT_RGB666_1X7X3_SPWG MEDIA_BUS_FMT_RGB888_1X7X4_SPWG
++	.bus_format = MEDIA_BUS_FMT_RGB888_1X24,  //MEDIA_BUS_FMT_RGB666_1X7X3_SPWG MEDIA_BUS_FMT_RGB888_1X7X4_SPWG  MEDIA_BUS_FMT_RGB888_1X24
+ 	.connector_type = DRM_MODE_CONNECTOR_LVDS,
+ };
+ 
+-- 
+2.25.1
+

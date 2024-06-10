@@ -1,0 +1,550 @@
+From bb7a52d28bc64b6512df9f0df69e545613c46712 Mon Sep 17 00:00:00 2001
+From: "albert.lin" <albert.lin@qbictechnology.com>
+Date: Fri, 24 Jun 2022 10:03:55 +0800
+Subject: [PATCH 40/40] add read gpio GP2_07_LCDID to load 8" or 12" devie tree
+
+---
+ .../boot/dts/freescale/imx8mp-bds0800.dts     |   8 +-
+ .../boot/dts/freescale/imx8mp-bds1200.dts     | 250 ++++++++----------
+ .../sources/u-boot-imx/2021.04-r0/cmd/booti.c |   2 +
+ .../u-boot-imx/2021.04-r0/common/board_r.c    |  22 ++
+ .../conf/machine/imx8mp-bdsxx00.conf          |   1 +
+ 5 files changed, 137 insertions(+), 146 deletions(-)
+
+diff --git a/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts b/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts
+index b197b55df..f3ca4dad2 100644
+--- a/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts
++++ b/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds0800.dts
+@@ -94,8 +94,8 @@ lvds_backlight: lvds_backlight {
+ 	};
+ 	
+ 	lvds0_panel {
+-// 		compatible = "suniverse,st080hdldn00";
+-        compatible = "auo,g121ean01";
++ 		compatible = "suniverse,st080hdldn00";
++        //compatible = "auo,g121ean01";
+         pinctrl-names = "default";
+ 		pinctrl-0 = <&pinctrl_lvds_panel>;
+ // 		backlight = <&lvds_backlight>;
+@@ -442,9 +442,9 @@ &ldb {
+ // 	fsl,dual-channel;
+ 
+ 	lvds-channel@0 {
+-        fsl,data-mapping = "jeida";  // "jeida"  "spwg".
++        //fsl,data-mapping = "jeida";  // "jeida"  "spwg".
+         
+-//         fsl,data-mapping = "spwg";  // "jeida"  "spwg".
++        fsl,data-mapping = "spwg";  // "jeida"  "spwg".
+         fsl,data-width = <24>;  // <18>  <24>.
+         
+         status = "okay";
+diff --git a/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds1200.dts b/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds1200.dts
+index ea4220382..b197b55df 100644
+--- a/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds1200.dts
++++ b/qbic/sources/linux-imx-5.15.5/arch/arm64/boot/dts/freescale/imx8mp-bds1200.dts
+@@ -9,7 +9,7 @@
+ #include "imx8mp.dtsi"
+ 
+ / {
+-	model = "QBIC bdsxx00 EVT kernel .........3";
++	model = "QBIC bdsxx00 EVT Board";
+ 	compatible = "fsl,imx8mp-evk", "fsl,imx8mp";
+ 
+ 	chosen {
+@@ -22,27 +22,6 @@ memory@40000000 {
+ 		      <0x1 0x00000000 0 0xc0000000>;
+ 	};
+ 
+-	reg_can1_stby: regulator-can1-stby {
+-		compatible = "regulator-fixed";
+-		regulator-name = "can1-stby";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_flexcan1_reg>;
+-		regulator-min-microvolt = <3300000>;
+-		regulator-max-microvolt = <3300000>;
+-		gpio = <&gpio5 5 GPIO_ACTIVE_HIGH>;
+-		enable-active-high;
+-	};
+-
+-	reg_can2_stby: regulator-can2-stby {
+-		compatible = "regulator-fixed";
+-		regulator-name = "can2-stby";
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pinctrl_flexcan2_reg>;
+-		regulator-min-microvolt = <3300000>;
+-		regulator-max-microvolt = <3300000>;
+-		gpio = <&gpio4 27 GPIO_ACTIVE_HIGH>;
+-		enable-active-high;
+-	};
+ 
+ 	reg_audio_pwr: regulator-audio-pwr {
+ 		compatible = "regulator-fixed";
+@@ -53,6 +32,17 @@ reg_audio_pwr: regulator-audio-pwr {
+ 		enable-active-high;
+ 		regulator-always-on;
+ 	};
++    
++	sound-xcvr {
++		compatible = "fsl,imx-audio-card";
++		model = "imx-audio-xcvr";
++		pri-dai-link {
++			link-name = "XCVR PCM";
++			cpu {
++				sound-dai = <&xcvr>;
++			};
++		};
++	};
+ 
+ 	sound-wm8960 {
+ 		compatible = "fsl,imx-audio-wm8960";
+@@ -69,8 +59,7 @@ sound-wm8960 {
+ 			"Ext Spk", "SPK_RP",
+ 			"Ext Spk", "SPK_RN",
+ 			"LINPUT1", "Mic Jack",
+-			"LINPUT3", "Mic Jack",
+-			"Mic Jack", "MICB";
++			"LINPUT3", "Mic Jack";
+ 	};
+ 
+ 	sound-micfil {
+@@ -139,12 +128,7 @@ flash0: mt25qu256aba@0 {
+ 	};
+ };
+ 
+-&flexcan1 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_flexcan1>;
+-	xceiver-supply = <&reg_can1_stby>;
+-	status = "okay";
+-};
++
+ 
+ &A53_0 {
+ 	cpu-supply = <&buck2>;
+@@ -186,10 +170,12 @@ &ecspi2 {
+ 	cs-gpios = <&gpio5 13 GPIO_ACTIVE_LOW>;
+ 	status = "okay";
+ 
+-	spidev1: spi@0 {
++	flash: w25q256jw@0 {
++		#address-cells = <1>;
++		#size-cells = <1>;
++		compatible = "st,m25p32";
++		spi-max-frequency = <20000000>;
+ 		reg = <0>;
+-		compatible = "rohm,dh2228fv";
+-		spi-max-frequency = <500000>;
+ 	};
+ };
+ 
+@@ -378,6 +364,39 @@ &i2c2 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_i2c2>;
+ 	status = "okay";
++    
++    pcf85063: rtc@51 {
++	compatible = "nxp,pcf85063a";
++	reg = <0x51>;
++	quartz-load-femtofarads = <12500>;
++
++		clock {
++			compatible = "fixed-clock";
++			#clock-cells = <0>;
++			clock-frequency = <32768>;
++		};
++	};
++    
++    
++    ili251x: ili251x@41 {
++        compatible = "ilitek,ili251x";
++		reg = <0x41>;
++		pinctrl-names = "default";
++        pinctrl-0 = <&ili251x_pins>;
++//         interrupts-extended = <&gpio1 8 IRQ_TYPE_LEVEL_HIGH>;  //IRQ_TYPE_LEVEL_LOW
++// 		irq-gpios = <&gpio1 8 IRQ_TYPE_LEVEL_HIGH>;  //GPIO_ACTIVE_HIGH IRQ_TYPE_LEVEL_HIGH  IRQ_TYPE_LEVEL_LOW
++
++        interrupt-parent = <&gpio1>;
++		interrupts = <8 IRQ_TYPE_EDGE_FALLING>;
++        
++        reset-gpios = <&gpio1 9 GPIO_ACTIVE_LOW>; //GPIO_ACTIVE_HIGH GPIO_ACTIVE_LOW
++
++
++// 		touchscreen-size-x = <16384>;
++// 		touchscreen-size-y = <9600>;
++	};
++
++
+ };
+ 
+ &i2c3 {
+@@ -399,24 +418,17 @@ codec: wm8960@1a {
+ 
+ };
+ 
+-&irqsteer_hdmi {
+-	status = "okay";
+-};
+-
+-&hdmi_blk_ctrl {
+-	status = "okay";
+-};
+-
+-&hdmi_pavi {
+-	status = "okay";
+-};
+-
+-&hdmi {
++&i2c4 {
++	clock-frequency = <400000>;
++	pinctrl-names = "default";
++	pinctrl-0 = <&pinctrl_i2c4>;
+ 	status = "okay";
+-};
++    
++	hdc2010@41 {
++		compatible = "ti,hdc2010";
++		reg = <0x41>;
++	};
+ 
+-&hdmiphy {
+-	status = "okay";
+ };
+ 
+ 
+@@ -424,12 +436,6 @@ &lcdif2 {
+ 	status = "okay";
+ };
+ 
+-&lcdif3 {
+-	status = "okay";
+-
+-	thres-low  = <1 2>;             /* (FIFO * 1 / 2) */
+-	thres-high = <3 4>;             /* (FIFO * 3 / 4) */
+-};
+ 
+ &ldb {
+ 	status = "okay";
+@@ -437,7 +443,10 @@ &ldb {
+ 
+ 	lvds-channel@0 {
+         fsl,data-mapping = "jeida";  // "jeida"  "spwg".
++        
++//         fsl,data-mapping = "spwg";  // "jeida"  "spwg".
+         fsl,data-width = <24>;  // <18>  <24>.
++        
+         status = "okay";
+ 
+ 		port@1 {
+@@ -478,9 +487,9 @@ &micfil {
+ &pcie{
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_pcie>;
+-	disable-gpio = <&gpio2 6 GPIO_ACTIVE_LOW>;
+-	reset-gpio = <&gpio2 7 GPIO_ACTIVE_LOW>;
+-	ext_osc = <1>;
++	disable-gpio = <&gpio3 24 GPIO_ACTIVE_LOW>;
++	reset-gpio = <&gpio4 14 GPIO_ACTIVE_LOW>;
++	ext_osc = <0>;
+ 	clocks = <&clk IMX8MP_CLK_HSIO_ROOT>,
+ 		 <&clk IMX8MP_CLK_PCIE_AUX>,
+ 		 <&clk IMX8MP_CLK_HSIO_AXI>,
+@@ -505,7 +514,7 @@ wifi_wake_host {
+ &pcie_ep{
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_pcie>;
+-	ext_osc = <1>;
++	ext_osc = <0>;
+ 	clocks = <&clk IMX8MP_CLK_HSIO_ROOT>,
+ 		 <&clk IMX8MP_CLK_PCIE_AUX>,
+ 		 <&clk IMX8MP_CLK_HSIO_AXI>,
+@@ -520,7 +529,7 @@ &pcie_ep{
+ };
+ 
+ &pcie_phy{
+-	ext_osc = <1>;
++	ext_osc = <0>;
+ 	status = "okay";
+ };
+ 
+@@ -588,7 +597,7 @@ &usb3_0 {
+ };
+ 
+ &usb_dwc3_0 {
+-	dr_mode = "otg";
++	dr_mode = "host";
+ 	hnp-disable;
+ 	srp-disable;
+ 	adp-disable;
+@@ -616,10 +625,10 @@ &usb_dwc3_1 {
+ 	status = "okay";
+ };
+ 
+-&uart3 {
++&uart4 {
+ 	pinctrl-names = "default";
+-	pinctrl-0 = <&pinctrl_uart3>;
+-	assigned-clocks = <&clk IMX8MP_CLK_UART3>;
++	pinctrl-0 = <&pinctrl_uart4>;
++	assigned-clocks = <&clk IMX8MP_CLK_UART4>;
+ 	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_80M>;
+ 	fsl,uart-has-rtscts;
+ 	status = "okay";
+@@ -654,6 +663,7 @@ MX8MP_IOMUXC_HDMI_DDC_SCL__HDMIMIX_HDMI_SCL	0x400001c3
+ 			MX8MP_IOMUXC_HDMI_DDC_SDA__HDMIMIX_HDMI_SDA	0x400001c3
+ 			MX8MP_IOMUXC_HDMI_HPD__HDMIMIX_HDMI_HPD		0x40000019
+ 			MX8MP_IOMUXC_HDMI_CEC__HDMIMIX_HDMI_CEC		0x40000019
++			MX8MP_IOMUXC_GPIO1_IO12__GPIO1_IO12	0x16
+ 		>;
+ 	};
+ 
+@@ -663,18 +673,6 @@ MX8MP_IOMUXC_GPIO1_IO01__PWM1_OUT	0x116
+ 		>;
+ 	};
+ 
+-	pinctrl_pwm2: pwm2grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_GPIO1_IO11__PWM2_OUT	0x116
+-		>;
+-	};
+-
+-	pinctrl_pwm4: pwm4grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI5_RXFS__PWM4_OUT	0x116
+-		>;
+-	};
+-
+ 	pinctrl_ecspi2: ecspi2grp {
+ 		fsl,pins = <
+ 			MX8MP_IOMUXC_ECSPI2_SCLK__ECSPI2_SCLK		0x82
+@@ -686,6 +684,7 @@ MX8MP_IOMUXC_ECSPI2_MISO__ECSPI2_MISO		0x82
+ 	pinctrl_ecspi2_cs: ecspi2cs {
+ 		fsl,pins = <
+ 			MX8MP_IOMUXC_ECSPI2_SS0__GPIO5_IO13		0x40000
++//			MX8MP_IOMUXC_SAI5_MCLK__GPIO3_IO25		0x40000
+ 		>;
+ 	};
+ 
+@@ -709,52 +708,6 @@ MX8MP_IOMUXC_SAI2_RXC__GPIO4_IO22				0x19
+ 		>;
+ 	};
+ 
+-	pinctrl_fec: fecgrp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI1_RXD2__ENET1_MDC		0x3
+-			MX8MP_IOMUXC_SAI1_RXD3__ENET1_MDIO		0x3
+-			MX8MP_IOMUXC_SAI1_RXD4__ENET1_RGMII_RD0		0x91
+-			MX8MP_IOMUXC_SAI1_RXD5__ENET1_RGMII_RD1		0x91
+-			MX8MP_IOMUXC_SAI1_RXD6__ENET1_RGMII_RD2		0x91
+-			MX8MP_IOMUXC_SAI1_RXD7__ENET1_RGMII_RD3		0x91
+-			MX8MP_IOMUXC_SAI1_TXC__ENET1_RGMII_RXC		0x91
+-			MX8MP_IOMUXC_SAI1_TXFS__ENET1_RGMII_RX_CTL	0x91
+-			MX8MP_IOMUXC_SAI1_TXD0__ENET1_RGMII_TD0		0x1f
+-			MX8MP_IOMUXC_SAI1_TXD1__ENET1_RGMII_TD1		0x1f
+-			MX8MP_IOMUXC_SAI1_TXD2__ENET1_RGMII_TD2		0x1f
+-			MX8MP_IOMUXC_SAI1_TXD3__ENET1_RGMII_TD3		0x1f
+-			MX8MP_IOMUXC_SAI1_TXD4__ENET1_RGMII_TX_CTL	0x1f
+-			MX8MP_IOMUXC_SAI1_TXD5__ENET1_RGMII_TXC		0x1f
+-			MX8MP_IOMUXC_SAI1_RXD0__GPIO4_IO02		0x19
+-		>;
+-	};
+-
+-	pinctrl_flexcan1: flexcan1grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SPDIF_RX__CAN1_RX          0x154
+-			MX8MP_IOMUXC_SPDIF_TX__CAN1_TX          0x154
+-		>;
+-	};
+-
+-	pinctrl_flexcan2: flexcan2grp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI5_MCLK__CAN2_RX         0x154
+-			MX8MP_IOMUXC_SAI5_RXD3__CAN2_TX         0x154
+-		>;
+-	};
+-
+-	pinctrl_flexcan1_reg: flexcan1reggrp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SPDIF_EXT_CLK__GPIO5_IO05  0x154   /* CAN1_STBY */
+-		>;
+-	};
+-
+-	pinctrl_flexcan2_reg: flexcan2reggrp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_SAI2_MCLK__GPIO4_IO27      0x154   /* CAN2_STBY */
+-		>;
+-	};
+-
+ 	pinctrl_flexspi0: flexspi0grp {
+ 		fsl,pins = <
+ 			MX8MP_IOMUXC_NAND_ALE__FLEXSPI_A_SCLK           0x1c2
+@@ -769,6 +722,7 @@ MX8MP_IOMUXC_NAND_DATA03__FLEXSPI_A_DATA03      0x82
+ 	pinctrl_gpio_led: gpioledgrp {
+ 		fsl,pins = <
+ 			MX8MP_IOMUXC_NAND_READY_B__GPIO3_IO16	0x19
++						MX8MP_IOMUXC_SAI5_MCLK__GPIO3_IO25		0x40000
+ 		>;
+ 	};
+     
+@@ -776,6 +730,9 @@ pinctrl_lvds_panel: gpiopanelgrp {
+ 		fsl,pins = <
+ 			MX8MP_IOMUXC_GPIO1_IO06__GPIO1_IO06	0x16
+ 			MX8MP_IOMUXC_GPIO1_IO07__GPIO1_IO07	0x16
++			MX8MP_IOMUXC_GPIO1_IO11__GPIO1_IO11	0x16
++			MX8MP_IOMUXC_SAI5_MCLK__GPIO3_IO25	0x16
++// 			MX8MP_IOMUXC_SAI5_RXD3__GPIO3_IO24	0x16
+ 		>;
+ 	};
+ 
+@@ -799,19 +756,20 @@ MX8MP_IOMUXC_I2C3_SCL__I2C3_SCL		0x400001c2
+ 			MX8MP_IOMUXC_I2C3_SDA__I2C3_SDA		0x400001c2
+ 		>;
+ 	};
+-
+-	pinctrl_mipi_dsi_en: mipi_dsi_en {
++    
++	pinctrl_i2c4: i2c4grp {
+ 		fsl,pins = <
+-			MX8MP_IOMUXC_GPIO1_IO08__GPIO1_IO08	0x16
++			MX8MP_IOMUXC_I2C4_SCL__I2C4_SCL		0x400001c2
++			MX8MP_IOMUXC_I2C4_SDA__I2C4_SDA		0x400001c2
+ 		>;
+ 	};
+ 
+ 	pinctrl_pcie: pciegrp {
+ 		fsl,pins = <
+-			MX8MP_IOMUXC_I2C4_SCL__PCIE_CLKREQ_B		0x61 /* open drain, pull up */
+-			MX8MP_IOMUXC_SD1_DATA4__GPIO2_IO06		0x41
+-			MX8MP_IOMUXC_SD1_DATA5__GPIO2_IO07		0x41
+-			MX8MP_IOMUXC_I2C4_SDA__GPIO5_IO21		0x1c4
++			//MX8MP_IOMUXC_UART4_RXD__PCIE_CLKREQ_B		0x61 /* open drain, pull up */
++			MX8MP_IOMUXC_SAI5_RXD3__GPIO3_IO24		0x41   //disable 
++			MX8MP_IOMUXC_SAI1_TXD2__GPIO4_IO14		0x41   //reset
++			MX8MP_IOMUXC_SAI1_TXD0__GPIO4_IO12		0x1c4
+ 		>;
+ 	};
+ 
+@@ -832,10 +790,26 @@ pinctrl_pdm: pdmgrp {
+ 			MX8MP_IOMUXC_SAI5_RXC__AUDIOMIX_PDM_CLK		0xd6
+ 			MX8MP_IOMUXC_SAI5_RXD0__AUDIOMIX_PDM_BIT_STREAM00	0xd6
+ 			MX8MP_IOMUXC_SAI5_RXD1__AUDIOMIX_PDM_BIT_STREAM01	0xd6
+-			MX8MP_IOMUXC_SAI5_RXD2__AUDIOMIX_PDM_BIT_STREAM02	0xd6
+-			MX8MP_IOMUXC_SAI5_RXD3__AUDIOMIX_PDM_BIT_STREAM03	0xd6
+ 		>;
+ 	};
++    
++    ili251x_pins: ili251xgrp {
++		fsl,pins = <
++// #define GPIRQ_GT911 		<&gpio1 8 IRQ_TYPE_LEVEL_HIGH>
++// #define GP_GT911_IRQ 		<&gpio1 8 GPIO_ACTIVE_HIGH>
++			MX8MP_IOMUXC_GPIO1_IO08__GPIO1_IO08	0x000001c0
++			//0x000001c0
++			/* driver writes levels, instead of active/inactive */
++// #define GP_GT911_RESET		<&gpio1 9 GPIO_ACTIVE_HIGH>
++			MX8MP_IOMUXC_GPIO1_IO09__GPIO1_IO09	0x16
++			//0x16
++		>;
++	};
++    
++	// out up od 0x160
++	// out down od 0x120
++	// out up cmos 0x160
++	// in up cmos 0x140
+ 
+ 	pinctrl_sai2: sai2grp {
+ 		fsl,pins = <
+@@ -858,12 +832,6 @@ MX8MP_IOMUXC_SAI3_RXC__GPIO4_IO29		0xd6
+ 		>;
+ 	};
+ 
+-	pinctrl_i2c2_synaptics_dsx_io: synaptics_dsx_iogrp {
+-		fsl,pins = <
+-			MX8MP_IOMUXC_GPIO1_IO09__GPIO1_IO09		0x16
+-		>;
+-	};
+-
+ 	pinctrl_uart1: uart1grp {
+ 		fsl,pins = <
+ 			MX8MP_IOMUXC_UART1_RXD__UART1_DCE_RX	0x140
+@@ -898,12 +866,10 @@ MX8MP_IOMUXC_GPIO1_IO14__USB2_PWR		0x19
+ 		>;
+ 	};
+ 
+-	pinctrl_uart3: uart3grp {
++	pinctrl_uart4: uart4grp {
+ 		fsl,pins = <
+-			MX8MP_IOMUXC_ECSPI1_SCLK__UART3_DCE_RX		0x140
+-			MX8MP_IOMUXC_ECSPI1_MOSI__UART3_DCE_TX		0x140
+-			MX8MP_IOMUXC_ECSPI1_SS0__UART3_DCE_RTS		0x140
+-			MX8MP_IOMUXC_ECSPI1_MISO__UART3_DCE_CTS		0x140
++			MX8MP_IOMUXC_UART4_RXD__UART4_DCE_RX	0x140
++			MX8MP_IOMUXC_UART4_TXD__UART4_DCE_TX	0x140
+ 		>;
+ 	};
+ 
+diff --git a/qbic/sources/u-boot-imx/2021.04-r0/cmd/booti.c b/qbic/sources/u-boot-imx/2021.04-r0/cmd/booti.c
+index 2b9e6a667..8ae4364ec 100644
+--- a/qbic/sources/u-boot-imx/2021.04-r0/cmd/booti.c
++++ b/qbic/sources/u-boot-imx/2021.04-r0/cmd/booti.c
+@@ -33,7 +33,9 @@ static int booti_start(struct cmd_tbl *cmdtp, int flag, int argc,
+ 	unsigned long comp_len;
+ 	unsigned long decomp_len;
+ 	int ctype;
++	const char *fdtfile = env_get("fdtfile");
+ 
++	printf("boot start dt: %s\r\n", fdtfile);
+ 	ret = do_bootm_states(cmdtp, flag, argc, argv, BOOTM_STATE_START,
+ 			      images, 1);
+ 
+diff --git a/qbic/sources/u-boot-imx/2021.04-r0/common/board_r.c b/qbic/sources/u-boot-imx/2021.04-r0/common/board_r.c
+index aa0fe6b57..f6dd3c21d 100644
+--- a/qbic/sources/u-boot-imx/2021.04-r0/common/board_r.c
++++ b/qbic/sources/u-boot-imx/2021.04-r0/common/board_r.c
+@@ -621,11 +621,33 @@ static int initr_check_spl_recovery(void)
+ }
+ #endif
+ 
++//GPIO2_IO7 : 1-> 8", 0 -> 12"
++#define LCD_ID_PIN 32 + 7
++#define FDTFILE "fdtfile"
++#define BDS0800_DT "imx8mp-bds0800.dtb"
++#define BDS1200_DT "imx8mp-bds1200.dtb"
++
++
+ static int run_main_loop(void)
+ {
++	const char *fdtfile = env_get(FDTFILE);
++	int ret = gpio_request(LCD_ID_PIN,"LCD_ID");
++
++	gpio_direction_input(LCD_ID_PIN);
++
++	int lcdid = gpio_get_value(LCD_ID_PIN);
++
+ #ifdef CONFIG_SANDBOX
+ 	sandbox_main_loop_init();
+ #endif
++	printf("default device tree setting: %s \r\n",fdtfile);
++	printf("lcdid %d\r\n", lcdid);
++	if(lcdid == 1){
++		env_set(FDTFILE, BDS0800_DT);
++	}else{
++		env_set(FDTFILE, BDS1200_DT);
++	}
++	env_save();
+ 	/* main_loop() can return to retry autoboot, if so just run it again */
+ 	for (;;)
+ 		main_loop();
+diff --git a/sources/meta-freescale/conf/machine/imx8mp-bdsxx00.conf b/sources/meta-freescale/conf/machine/imx8mp-bdsxx00.conf
+index cab4264b0..0f7beee48 100644
+--- a/sources/meta-freescale/conf/machine/imx8mp-bdsxx00.conf
++++ b/sources/meta-freescale/conf/machine/imx8mp-bdsxx00.conf
+@@ -14,6 +14,7 @@ KERNEL_DEVICETREE_BASENAME = "imx8mp-bds0800"
+ KERNEL_DEVICETREE:append:use-nxp-bsp = " \
+ 	freescale/imx8mp-bds0800.dtb \
+ 	freescale/imx8mp-evk.dtb \
++	freescale/imx8mp-bds1200.dtb \
+ "
+ 
+ 
+-- 
+2.25.1
+

@@ -1,0 +1,30 @@
+From b08bbd3671043cb0108dd7c0c37c042aff971d01 Mon Sep 17 00:00:00 2001
+From: aaron <you@example.com>
+Date: Fri, 15 Apr 2022 14:33:22 +0800
+Subject: [PATCH 01/40] add new distro
+
+---
+ .../meta-imx/meta-sdk/conf/distro/qbic_wayland.conf   | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+ create mode 100644 sources/meta-imx/meta-sdk/conf/distro/qbic_wayland.conf
+
+diff --git a/sources/meta-imx/meta-sdk/conf/distro/qbic_wayland.conf b/sources/meta-imx/meta-sdk/conf/distro/qbic_wayland.conf
+new file mode 100644
+index 000000000..5a1239d72
+--- /dev/null
++++ b/sources/meta-imx/meta-sdk/conf/distro/qbic_wayland.conf
+@@ -0,0 +1,11 @@
++# i.MX DISTRO for Wayland with X11
++
++include conf/distro/include/fsl-imx-base.inc
++include conf/distro/include/fsl-imx-preferred-env.inc
++include conf/distro/include/fsl-imx-xwayland.inc
++
++DISTRO = "qbic_debian"
++
++# Remove conflicting backends
++DISTRO_FEATURES_remove = "directfb "
++DISTRO_FEATURES_append = " x11 wayland pam"
+-- 
+2.25.1
+
